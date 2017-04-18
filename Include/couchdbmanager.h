@@ -137,6 +137,8 @@
 #include <exception>
 #include <limits>
 
+#include <type_traits>
+
 #include "baseobject.h"
 #include "baseuser.h"
 #include "baseentity.h"
@@ -1775,8 +1777,30 @@ namespace CouchDBManager
          * @return true si la entidad se ha bloqueado.
          */
         template <class T>
+        typename std::enable_if<std::is_base_of<CouchDBManager::VersionableEntity, T>::value, void>::type
         bool lock(T* entity)
         {
+            assert((CouchDBManager::VersionableEntity const*)&entity);
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            CouchDBManager::UserContext* uc = this->user_context();
+            bool went_ok = this->lock<T>(entity, uc->get_userCtx().name);
+
+            delete uc;
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return went_ok;
+        }/**
+         * @brief lock Bloquea una entidad.
+         * @param entity Clase que deriva de VersionableEntity.
+         * @param locked_by Nombre de usuario que realiza el bloqueo de la entidad.
+         * @return true si la entidad se ha bloqueado.
+         */
+        template <class T>
+        bool lock(T* entity, const QString& locked_by)
+        {
+            assert((CouchDBManager::VersionableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
             if (!this->is_versionable_entity(entity))
@@ -1786,29 +1810,31 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
-//                qFatal(err.toStdString().c_str());
-                response->set_went_ok(false);
-                response->set_response(err);
 
                 return false;
             }
 
             entity->set_locked(true);
+            entity->set_locked_by(locked_by);
 
             CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
+            bool went_ok = resp->went_ok();
+
+            delete resp;
 
             qDebug() << "<" << Q_FUNC_INFO;
 
-            return resp->went_ok();
+            return went_ok;
         }
         /**
          * @brief unlock Desbloquea una entidad.
          * @param entity Clase que deriva de VersionableEntity.
-         * @return Clase que deriva de VersionableEntity.
+         * @return true si la entidad se ha desbloqueado.
          */
         template <class T>
         bool unlock(T* entity)
         {
+            assert((CouchDBManager::VersionableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
             if (!this->is_versionable_entity(entity))
@@ -1818,20 +1844,129 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
-//                qFatal(err.toStdString().c_str());
-                response->set_went_ok(false);
-                response->set_response(err);
 
                 return false;
             }
 
-            entity->set_locked(false);
+            CouchDBManager::UserContext* uc = this->user_context();
+            bool went_ok = this->unlock<T>(entity, uc->get_userCtx().name);
 
-            CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
+            delete uc;
 
             qDebug() << "<" << Q_FUNC_INFO;
 
-            return resp->went_ok();
+            return went_ok;
+        }
+        /**
+         * @brief unlock Desbloquea una entidad.
+         * @param entity Clase que deriva de VersionableEntity.
+         * @param locked_by Nombre de usuario que realiza el desbloqueo de la entidad.
+         * @return true si la entidad se ha desbloqueado.
+         */
+        template <class T>
+        bool unlock(T* entity, const QString& locked_by)
+        {
+            assert((CouchDBManager::VersionableEntity const*)&entity);
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            if (!this->is_versionable_entity(entity))
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+
+                return false;
+            }
+
+            bool went_ok = false;
+
+            if (this->is_locked_by_user<T>(entity, locked_by))
+            {
+                entity->set_locked(false);
+                entity->set_locked_by("");
+
+                CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
+                went_ok = resp->went_ok();
+
+                delete resp;
+            }
+            else
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Entity locked by another user.";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+                response->set_went_ok(false);
+                response->set_response(err);
+            }
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return went_ok;
+        }
+        /**
+         * @brief is_locked Verifica si la entidad está bloqueada por el usuario actual.
+         * @param entity Clase que deriva de VersionableEntity.
+         * @return true si la entidad está bloqueada por el usuario actual.
+         */
+        template <class T>
+        bool is_locked_by_user(T* entity)
+        {
+            assert((CouchDBManager::VersionableEntity const*)&entity);
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            if (!this->is_versionable_entity(entity))
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+
+                return false;
+            }
+
+            CouchDBManager::UserContext* uc = this->user_context();
+
+            bool is_locked = this->is_locked_by_user<T>(entity, uc->get_userCtx().name);
+
+            delete uc;
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return is_locked;
+        }
+        /**
+         * @brief is_locked Verifica si la entidad está bloqueada por el usuario actual.
+         * @param entity Clase que deriva de VersionableEntity.
+         * @param locked_by Nombre de usuario para comprobar el bloqueo de la entidad.
+         * @return true si la entidad está bloqueada por el usuario actual.
+         */
+        template <class T>
+        bool is_locked_by_user(T* entity, const QString& locked_by)
+        {
+            assert((CouchDBManager::VersionableEntity const*)&entity);
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            if (!this->is_versionable_entity(entity))
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+
+                return false;
+            }
+
+            bool is_locked = entity->get_locked() && entity->get_locked_by() == locked_by;
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return is_locked;
         }
 
         /**

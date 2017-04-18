@@ -1,4 +1,6 @@
 Bin
+Test/Bin
+Test/**/*.pro.*
 Make/**
 !Make/CouchDBManager.pro
 CVS
