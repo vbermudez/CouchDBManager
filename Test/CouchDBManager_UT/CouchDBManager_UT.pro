@@ -25,9 +25,7 @@ SOURCES += tst_couchdbmanager_unittest.cpp \
     variables.cpp \
     bus.cpp \
     auxiliary.cpp \
-    types.cpp \
-    connection.cpp \
-    rel_physical_device_connection.cpp
+    types.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../Bin/release/ -lCouchDBManager
@@ -50,10 +48,4 @@ HEADERS += \
     rs485cosmos.h \
     monitconfig.h \
     auxiliary.h \
-    types.h \
-    action.h \
-    connection.h \
-    rel_physical_device_connection.h \
-    configuration_types.h \
-    distributed_container_types.h \
-    entityfactory.h
+    types.h

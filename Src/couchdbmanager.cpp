@@ -22,7 +22,7 @@
 //
 // $Log: couchdbmanager.cpp,v $
 // Revision 1.23  2017/02/26 23:55:25  jgurrutxaga
-// Corregir la gestión del timeout y la terminación de la petición al servidor. Liberar recursos en caso de timeout.
+// Corregir la gestiÃ³n del timeout y la terminaciÃ³n de la peticiÃ³n al servidor. Liberar recursos en caso de timeout.
 //
 // Revision 1.22  2017/02/24 09:37:30  jgurrutxaga
 // Disable "read timeout" when readyRead signal is received from QNetworkReply
@@ -119,6 +119,8 @@ void CouchDBManager::DBManager::initialize()
     this->registerType<CouchDBManager::ServerResource*>();
     this->registerType<CouchDBManager::ReplicationConfig*>();
 
+    this->set_remote_conn();
+
     qDebug() << "<" << Q_FUNC_INFO;
 }
 
@@ -211,6 +213,7 @@ void CouchDBManager::DBManager::set_server_address(const QString& address)
     qDebug() << "><" << Q_FUNC_INFO;
 
     this->server_address = address;
+    this->set_remote_conn();
 }
 
 QString CouchDBManager::DBManager::get_auth_cookie() const
@@ -225,6 +228,57 @@ void CouchDBManager::DBManager::set_auth_cookie(const QString& a_auth_cookie)
     qDebug() << "><" << Q_FUNC_INFO;
 
     this->auth_cookie = a_auth_cookie;
+}
+
+void CouchDBManager::DBManager::set_remote_conn(bool a_remote_conn)
+{
+    qDebug() << "><" << Q_FUNC_INFO;
+
+    this->remote_conn = a_remote_conn;
+}
+
+void CouchDBManager::DBManager::set_remote_conn()
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+
+    QHostInfo hostInfo;
+    QString hostName = QHostInfo::localHostName();
+    QString serverAddr = this->get_server_address();
+    QStringList localNames;
+
+    this->remote_conn = false;
+
+    if (serverAddr.isEmpty() || serverAddr.isNull())
+    {
+        return;
+    }
+
+    QString serverHost = QUrl(this->get_server_address()).host();
+
+    localNames.append(hostName);
+    localNames.append("localhost");
+    localNames.append("127.0.0.1");
+
+    if (!hostInfo.addresses().isEmpty())
+    {
+        foreach (QHostAddress addr, hostInfo.addresses()) {
+            localNames.append(addr.toString());
+        }
+    }
+
+    if (!localNames.contains(serverHost, Qt::CaseInsensitive))
+    {
+        this->remote_conn = true;
+    }
+
+    qDebug() << "<" << Q_FUNC_INFO;
+}
+
+bool CouchDBManager::DBManager::get_remote_conn() const
+{
+    qDebug() << "><" << Q_FUNC_INFO;
+
+    return this->remote_conn;
 }
 
 QNetworkReply::NetworkError CouchDBManager::DBManager::get_network_error() const

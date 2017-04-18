@@ -24,16 +24,17 @@
 #include "physical_car.h"
 #include "physical_ut.h"
 #include "physical_ut_car.h"
+#include "physical_device.h"
 #include "bus.h"
 #include "rs485cosmos.h"
 #include "monitconfig.h"
 #include "auxiliary.h"
 #include "device.h"
 #include "types.h"
-#include "action.h"
-#include "connection.h"
-#include "entityfactory.h"
-#include "rel_bus_device.h"
+//#include "action.h"
+//#include "connection.h"
+//#include "entityfactory.h"
+//#include "rel_bus_device.h"
 
 class CouchDBManager_UnitTest : public QObject
 {
@@ -69,6 +70,9 @@ private Q_SLOTS:
     void updateBaseEntity();
     void createEntity();
     void readEntity();
+    void lockVersionableEntity();
+    void unlockVersionableEntity();
+    void lockAndUpdateVersionableEntity();
     void readEntityWithRelations();
     void updateEntity();
     void versionEntity();
@@ -123,14 +127,14 @@ CouchDBManager_UnitTest::CouchDBManager_UnitTest()
 {
     db = new CouchDBManager::DBManager(this);
 
-    db->registerType<Actions::Action*>();
+//    db->registerType<Actions::Action*>();
     db->registerType<CosmosRef*>();
     db->registerType<Rule*>();
     db->registerType<Linked*>();
     db->registerType<Bus*>();
     db->registerType<Car*>();
 //    db->registerType<Global::Types*>();
-    db->registerType<Actions::Connection*>();
+//    db->registerType<Actions::Connection*>();
     db->registerType<Device*>();
 //    db->registerType<Global::DistributedContainerTypes*>();
     db->registerType<MonitConfig*>();
@@ -138,7 +142,7 @@ CouchDBManager_UnitTest::CouchDBManager_UnitTest()
     db->registerType<Physical_device*>();
     db->registerType<Physical_ut*>();
     db->registerType<Physical_ut_car*>();
-    db->registerType<Actions::Rel_physical_device_connection*>();
+//    db->registerType<Actions::Rel_physical_device_connection*>();
     db->registerType<Rs485Cosmos*>();
     db->registerType<Configuration::Types*>();
     db->registerType<Configuration::Variable_types*>();
@@ -150,7 +154,7 @@ CouchDBManager_UnitTest::CouchDBManager_UnitTest()
     db->registerType<Configuration::Tools*>();
     db->registerType<Ut*>();
     db->registerType<Variables*>();
-    db->registerType<Configuration::Rel_bus_device*>();
+//    db->registerType<Configuration::Rel_bus_device*>();
 }
 
 void CouchDBManager_UnitTest::configureObject()
@@ -184,25 +188,25 @@ void CouchDBManager_UnitTest::testUpdateConflicts()
 void CouchDBManager_UnitTest::listNoDocs()
 {
     return;
-    QList<Actions::Connection*> list;
+//    QList<Actions::Connection*> list;
 
-    db->list<Actions::Connection>("actions", "relations", "connection", QString(), list);
+//    db->list<Actions::Connection>("actions", "relations", "connection", QString(), list);
 
-    QVERIFY2(list.isEmpty(), "List should be empty");
+//    QVERIFY2(list.isEmpty(), "List should be empty");
 }
 
 void CouchDBManager_UnitTest::listRelationEntities()
 {
     return;
-    QList<Configuration::Rel_bus_device*> list;
-    QString old_db = db->get_database_name();
+//    QList<Configuration::Rel_bus_device*> list;
+//    QString old_db = db->get_database_name();
 
-    db->set_database_name("device_problem");
-    db->list<Configuration::Rel_bus_device>("configuration", "relations", "rel_bus_device", QString(), list);
-    db->set_database_name(old_db);
+//    db->set_database_name("device_problem");
+//    db->list<Configuration::Rel_bus_device>("configuration", "relations", "rel_bus_device", QString(), list);
+//    db->set_database_name(old_db);
 
-    QVERIFY2(!list.isEmpty(), "List shouldn't be empty");
-    QVERIFY2(list.at(0)->get_bus() != NULL, "No relations loaded!");
+//    QVERIFY2(!list.isEmpty(), "List shouldn't be empty");
+//    QVERIFY2(list.at(0)->get_bus() != NULL, "No relations loaded!");
 }
 
 void CouchDBManager_UnitTest::getUserContext()
@@ -282,24 +286,24 @@ void CouchDBManager_UnitTest::deleteDatabase()
 void CouchDBManager_UnitTest::readTypes()
 {
     return;
-    CouchDBManager::EntityFactory* ef = new CouchDBManager::EntityFactory(db, this);
-    Global::Types* types = ef->newEntity<Global::Types>();
+//    CouchDBManager::EntityFactory* ef = new CouchDBManager::EntityFactory(db, this);
+//    Global::Types* types = ef->newEntity<Global::Types>();
 
-    db->read<Global::Types>("ad08e069be0f824c3a2153bd9d2b6eb5", QString(), types);
+//    db->read<Global::Types>("ad08e069be0f824c3a2153bd9d2b6eb5", QString(), types);
 
-    QVERIFY2(!types->get_id().isNull(), "_id is null");
-    QVERIFY2(!types->get_id().isEmpty(), "_id is empty");
-    QVERIFY2(!types->get_rev().isNull(), "_rev is null");
-    QVERIFY2(!types->get_rev().isEmpty(), "_rev is empty");
-    QVERIFY2(types->get_collection() == "conf_types", "Incorrect collection");
-    QVERIFY2(types->get_name() == "Configuration types", "Incorrect name");
+//    QVERIFY2(!types->get_id().isNull(), "_id is null");
+//    QVERIFY2(!types->get_id().isEmpty(), "_id is empty");
+//    QVERIFY2(!types->get_rev().isNull(), "_rev is null");
+//    QVERIFY2(!types->get_rev().isEmpty(), "_rev is empty");
+//    QVERIFY2(types->get_collection() == "conf_types", "Incorrect collection");
+//    QVERIFY2(types->get_name() == "Configuration types", "Incorrect name");
 
-    QList<Global::DistributedContainerTypes*> dcts = types->get_distributed_container_types();
+//    QList<Global::DistributedContainerTypes*> dcts = types->get_distributed_container_types();
 
-    foreach (Global::DistributedContainerTypes* dct, dcts)
-    {
-        qDebug() << "Name:" << dct->get_name() << ", Description:" << dct->get_description();
-    }
+//    foreach (Global::DistributedContainerTypes* dct, dcts)
+//    {
+//        qDebug() << "Name:" << dct->get_name() << ", Description:" << dct->get_description();
+//    }
 }
 
 void CouchDBManager_UnitTest::createBaseEntity()
@@ -348,7 +352,7 @@ void CouchDBManager_UnitTest::updateBaseEntity()
 
 void CouchDBManager_UnitTest::createEntity()
 {
-    return;
+//    return;
     Car car;
 
     car.set_name("My Car");
@@ -381,6 +385,92 @@ void CouchDBManager_UnitTest::readEntity()
     QVERIFY2(car.get_collection() == "car", "Incorrect collection");
     QVERIFY2(car.get_name() == "My Car", "Incorrect name");
 }
+
+void CouchDBManager_UnitTest::lockVersionableEntity()
+{
+//    return;
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My Car", "Incorrect name");
+
+    bool locked = db->lock<Car>(&car);
+
+    QVERIFY2(locked, "Entity not locked");
+
+    CouchDBManager::UserContext* uc = db->user_context();
+    QString usr = uc->get_userCtx().name;
+
+    QVERIFY2(car.get_locked_by() == usr, "Incorrect user");
+}
+
+void CouchDBManager_UnitTest::unlockVersionableEntity()
+{
+//    return;
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My Car", "Incorrect name");
+
+    CouchDBManager::UserContext* uc = db->user_context();
+    QString usr = uc->get_userCtx().name;
+
+    QVERIFY2(car.get_locked(), "Entity not locked");
+    QVERIFY2(car.get_locked_by() == usr, "Incorrect user");
+
+    bool unlocked = db->unlock<Car>(&car);
+
+    QVERIFY2(unlocked, "Entity not unlocked");
+    QVERIFY2(car.get_locked_by().isEmpty(), "User not empty");
+    QVERIFY2(!car.get_locked(), "Entity not unlocked");
+}
+
+void CouchDBManager_UnitTest::lockAndUpdateVersionableEntity()
+{
+//    return;
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My Car", "Incorrect name");
+
+    bool locked = db->lock<Car>(&car);
+
+    QVERIFY2(locked, "Entity not locked");
+
+    CouchDBManager::UserContext* uc = db->user_context();
+    QString usr = uc->get_userCtx().name;
+
+    QVERIFY2(car.get_locked_by() == usr, "Incorrect user");
+
+    car.set_name("My unlocked car");
+
+    CouchDBManager::DBManagerResponse* resp = db->update<Car>(&car, true);
+
+    QVERIFY2(resp->get_went_ok(), "Entity not updated");
+    QVERIFY2(car.get_locked_by().isEmpty(), "User not empty");
+    QVERIFY2(!car.get_locked(), "Entity not unlocked");
+}
+
 
 void CouchDBManager_UnitTest::updateEntity()
 {
@@ -1107,16 +1197,16 @@ void CouchDBManager_UnitTest::updateEntityWithRelations()
         QString orig_id = dev->get_id();
 //        int orig_size = dev->get_bus_device().size();
 
-        if (dev->get_bus_device().size() > 0)
-        {
-            Configuration::Rel_bus_device* rel = dev->get_bus_device().first();
+//        if (dev->get_bus_device().size() > 0)
+//        {
+//            Configuration::Rel_bus_device* rel = dev->get_bus_device().first();
 
-            dev->get_bus_device().removeOne(rel);
+//            dev->get_bus_device().removeOne(rel);
 
-            CouchDBManager::DBManagerResponse* resp = db->update<Device>(dev);
+//            CouchDBManager::DBManagerResponse* resp = db->update<Device>(dev);
 
-            QVERIFY2(resp->get_went_ok(), "Operation failed");
-        }
+//            QVERIFY2(resp->get_went_ok(), "Operation failed");
+//        }
     }
 
     db->set_database_name(old_db);

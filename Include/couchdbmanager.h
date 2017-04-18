@@ -133,11 +133,14 @@
 #include <QDateTime>
 #include <QTimer>
 #include <QSignalMapper>
+#include <QHostInfo>
+#include <QHostAddress>
 
 #include <exception>
 #include <limits>
 
 #include <type_traits>
+#include <assert.h>
 
 #include "baseobject.h"
 #include "baseuser.h"
@@ -185,6 +188,7 @@ namespace CouchDBManager
         QNetworkAccessManager* manager;
         bool nw_read;
         bool nw_timeout;
+        bool remote_conn;
 
         static const QString DATE_FORMAT;
         static const QString DATE_TIME_FORMAT;
@@ -242,6 +246,10 @@ namespace CouchDBManager
          */
         QString get_url(const QString& partial, const QString& query_string, bool use_context);
 
+        /**
+         * @brief set_remote_conn Comprueba si la conexión es local o remota
+         */
+        void set_remote_conn();
         /**
          * @brief set_common_headers Establece las cabeceras comunes para todas las peticiones http.
          * @param request Objeto QNetworkRequest en el que configurar las cabeceras.
@@ -991,6 +999,16 @@ namespace CouchDBManager
          */
         QString get_auth_cookie() const;
         /**
+         * @brief set_remote_conn Fuerza el tipo de conexión a remota o local.
+         * @param a_remote_conn Si es true, la conexión se tratará como remota.
+         */
+        void set_remote_conn(bool a_remote_conn);
+        /**
+         * @brief get_remote_conn Recupera el tipo de conexión (remota o local).
+         * @return true si la conexión es remota.
+         */
+        bool get_remote_conn() const;
+        /**
          * @brief get_network_error Indica si en la última operación ha existido algún error de comunicaciones.
          * @return QNetworkReply::NoError si no ha existido ningún error.
          */
@@ -1377,6 +1395,19 @@ namespace CouchDBManager
         template <class T>
         CouchDBManager::DBManagerResponse* update(T* entity)
         {
+            qDebug() << "><" << Q_FUNC_INFO;
+
+            return this->update<T>(entity, true);
+        }
+        /**
+         * @brief update Actualiza un documento en CouchDB.
+         * @param entity Objeto que extiende BaseEntity.
+         * @param unlock Si debe desbloquear la entidad o no. Sólo aplica a derivados de VersionableEntity.
+         * @return QJsonObject con la respuesta del servidor. Contiene la nueva _rev.
+         */
+        template <class T>
+        CouchDBManager::DBManagerResponse* update(T* entity, bool unlock)
+        {
             qDebug() << ">" << Q_FUNC_INFO;
 
             CouchDBManager::DBManagerResponse* response = new CouchDBManager::DBManagerResponse(this);
@@ -1394,8 +1425,6 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
-//                qFatal(err.toStdString().c_str());
-                qDebug() << "<" << Q_FUNC_INFO;
                 response->set_went_ok(false);
                 response->set_response(err);
             }
@@ -1406,28 +1435,51 @@ namespace CouchDBManager
                     T persisted;
                     int persisted_version = 0;
                     int entity_version = 0;
+                    bool locked_by_user = false;
 
                     this->read<T>(entity->get_id(), QString(), &persisted);
 
-//                    const QMetaObject* meta_persisted = persisted.metaObject();
+                    // Comprueba si la conexión es remota
+                    if (this->get_remote_conn())
+                    {
+                        // Comprueba que la entidad está bloqueada por el usuario actual
+                        if (!this->is_locked_by_user<T>(&persisted))
+                        {
+                            QString err = QString(Q_FUNC_INFO) + " FATAL The entity is not locked by the current user.";
+
+                            this->set_error_string(err);
+
+                            qCritical() << err;
+                            qDebug() << "<" << Q_FUNC_INFO;
+                            response->set_went_ok(false);
+                            response->set_response(err);
+
+                            return response;
+                        }
+                    }
 
                     QMetaObject::invokeMethod(&persisted, "get_version", Q_RETURN_ARG(int, persisted_version));
-//                    meta_persisted->invokeMethod(&persisted, "get_version", Q_RETURN_ARG(int, persisted_version));
                     QMetaObject::invokeMethod(entity, "get_version", Q_RETURN_ARG(int, entity_version));
-//                    meta_entity->invokeMethod(entity, "get_version", Q_RETURN_ARG(int, entity_version));
 
-                    if (persisted_version != entity_version)
+                    if (locked_by_user && persisted_version != entity_version)
                     {
                         persisted.set_id( QString(persisted.get_id() + "::%1").arg(persisted_version) );
                         persisted.set_rev("");
+                        QMetaObject::invokeMethod(&persisted, "set_locked", Q_ARG(bool, false));
+                        QMetaObject::invokeMethod(&persisted, "set_locked_by", Q_ARG(QString, ""));
                         QMetaObject::invokeMethod(&persisted, "set_working", Q_ARG(bool, false));
-//                        meta_persisted->invokeMethod(&persisted, "set_working", Q_ARG(bool, false));
 
                         DBManagerResponse* resp = this->create<T>(&persisted);
 
                         if (!resp->get_went_ok()) {
                             return resp;
                         }
+                    }
+
+                    if (unlock)
+                    {
+                        QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, false));
+                        QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
                     }
                 }
 
@@ -1777,7 +1829,6 @@ namespace CouchDBManager
          * @return true si la entidad se ha bloqueado.
          */
         template <class T>
-        typename std::enable_if<std::is_base_of<CouchDBManager::VersionableEntity, T>::value, void>::type
         bool lock(T* entity)
         {
             assert((CouchDBManager::VersionableEntity const*)&entity);
@@ -1810,17 +1861,41 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
+                qDebug() << ">" << Q_FUNC_INFO;
 
                 return false;
             }
 
-            entity->set_locked(true);
-            entity->set_locked_by(locked_by);
+            bool went_ok = false;
 
-            CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
-            bool went_ok = resp->went_ok();
+            if (!entity->get_locked())
+            {
+                QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, true));
+                QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, locked_by));
+//                entity->set_locked(true);
+//                entity->set_locked_by(locked_by);
 
-            delete resp;
+                CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
+                went_ok = resp->get_went_ok();
+
+                delete resp;
+            }
+            else if (this->is_locked_by_user<T>(entity, locked_by))
+            {
+                QString err = QString(Q_FUNC_INFO) + " WARN Entity is already locked.";
+
+//                this->set_error_string(err);
+
+                qWarning() << err;
+            }
+            else
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Entity is already locked by another user.";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+            }
 
             qDebug() << "<" << Q_FUNC_INFO;
 
@@ -1836,17 +1911,6 @@ namespace CouchDBManager
         {
             assert((CouchDBManager::VersionableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
-
-            if (!this->is_versionable_entity(entity))
-            {
-                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
-
-                this->set_error_string(err);
-
-                qCritical() << err;
-
-                return false;
-            }
 
             CouchDBManager::UserContext* uc = this->user_context();
             bool went_ok = this->unlock<T>(entity, uc->get_userCtx().name);
@@ -1876,6 +1940,7 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
+                qDebug() << ">" << Q_FUNC_INFO;
 
                 return false;
             }
@@ -1884,23 +1949,31 @@ namespace CouchDBManager
 
             if (this->is_locked_by_user<T>(entity, locked_by))
             {
-                entity->set_locked(false);
-                entity->set_locked_by("");
+                QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, false));
+                QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
+//                entity->set_locked(false);
+//                entity->set_locked_by("");
 
                 CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
-                went_ok = resp->went_ok();
+                went_ok = resp->get_went_ok();
 
                 delete resp;
             }
-            else
+            else if (entity->get_locked())
             {
                 QString err = QString(Q_FUNC_INFO) + " FATAL Entity locked by another user.";
 
                 this->set_error_string(err);
 
                 qCritical() << err;
-                response->set_went_ok(false);
-                response->set_response(err);
+            }
+            else
+            {
+                QString err = QString(Q_FUNC_INFO) + " WARN Entity is already unlocked.";
+
+//                this->set_error_string(err);
+
+                qWarning() << err;
             }
 
             qDebug() << "<" << Q_FUNC_INFO;
@@ -1918,19 +1991,7 @@ namespace CouchDBManager
             assert((CouchDBManager::VersionableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
-            if (!this->is_versionable_entity(entity))
-            {
-                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
-
-                this->set_error_string(err);
-
-                qCritical() << err;
-
-                return false;
-            }
-
             CouchDBManager::UserContext* uc = this->user_context();
-
             bool is_locked = this->is_locked_by_user<T>(entity, uc->get_userCtx().name);
 
             delete uc;
@@ -1958,11 +2019,16 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
+                qDebug() << ">" << Q_FUNC_INFO;
 
                 return false;
             }
 
-            bool is_locked = entity->get_locked() && entity->get_locked_by() == locked_by;
+            bool ent_locked;
+            QString ent_locked_by;
+            QMetaObject::invokeMethod(entity, "get_locked", Q_RETURN_ARG(bool, ent_locked));
+            QMetaObject::invokeMethod(entity, "get_locked_by", Q_RETURN_ARG(QString, ent_locked_by));
+            bool is_locked = ent_locked && ent_locked_by == locked_by;
 
             qDebug() << "<" << Q_FUNC_INFO;
 

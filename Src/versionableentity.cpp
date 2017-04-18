@@ -29,3 +29,13 @@ bool CouchDBManager::VersionableEntity::get_locked() const
 {
     return this->locked;
 }
+
+void CouchDBManager::VersionableEntity::set_locked_by(const QString& a_locked_by)
+{
+    this->locked_by = a_locked_by;
+}
+
+QString CouchDBManager::VersionableEntity::get_locked_by() const
+{
+    return this->locked_by;
+}

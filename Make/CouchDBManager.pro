@@ -20,7 +20,7 @@ DEFINES += QT_NO_DEBUG
 ROOT_DIR=../../..
 PROJECT_DIR=$$PWD/..
 
-include($$ROOT_DIR/Scm/AD.37.91.3001/build_rules.pri)
+#include($$ROOT_DIR/Scm/AD.37.91.3001/build_rules.pri)
 
 
 INCLUDEPATH += \
