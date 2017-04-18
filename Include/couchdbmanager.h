@@ -1397,7 +1397,7 @@ namespace CouchDBManager
         {
             qDebug() << "><" << Q_FUNC_INFO;
 
-            return this->update<T>(entity, true);
+            return this->update<T>(entity, false);
         }
         /**
          * @brief update Actualiza un documento en CouchDB.
@@ -1867,13 +1867,14 @@ namespace CouchDBManager
             }
 
             bool went_ok = false;
+            bool ent_locked;
 
-            if (!entity->get_locked())
+            QMetaObject::invokeMethod(entity, "get_locked", Q_RETURN_ARG(bool, ent_locked));
+
+            if (!ent_locked)
             {
                 QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, true));
                 QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, locked_by));
-//                entity->set_locked(true);
-//                entity->set_locked_by(locked_by);
 
                 CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
                 went_ok = resp->get_went_ok();
@@ -1946,20 +1947,21 @@ namespace CouchDBManager
             }
 
             bool went_ok = false;
+            bool ent_locked;
+
+            QMetaObject::invokeMethod(entity, "get_locked", Q_RETURN_ARG(bool, ent_locked));
 
             if (this->is_locked_by_user<T>(entity, locked_by))
             {
                 QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, false));
                 QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
-//                entity->set_locked(false);
-//                entity->set_locked_by("");
 
                 CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
                 went_ok = resp->get_went_ok();
 
                 delete resp;
             }
-            else if (entity->get_locked())
+            else if (ent_locked)
             {
                 QString err = QString(Q_FUNC_INFO) + " FATAL Entity locked by another user.";
 
