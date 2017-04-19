@@ -1442,8 +1442,29 @@ namespace CouchDBManager
                     // Comprueba si la conexión es remota
                     if (this->get_remote_conn())
                     {
-                        // Comprueba que la entidad está bloqueada por el usuario actual
-                        locked_by_user = this->is_locked_by_user<T>(&persisted);
+                        bool local_locked = false;
+                        bool persisted_locked = false;
+                        QString local_locked_by;
+
+                        QMetaObject::invokeMethod(entity, "get_locked", Q_RETURN_ARG(bool, local_locked));
+                        QMetaObject::invokeMethod(&persisted, "get_locked", Q_RETURN_ARG(bool, persisted_locked));
+                        QMetaObject::invokeMethod(entity, "get_locked_by", Q_RETURN_ARG(QString, local_locked_by));
+
+                        // Comprueba que la entidad de BBDD está bloqueada por el usuario establecido en la entidad local
+                        locked_by_user = this->is_locked_by_user<T>(&persisted, local_locked_by);
+
+                        // Comprueba que el documento de BBDD no está bloqueado y el local sí lo está
+                        if (!persisted_locked && local_locked)
+                        {
+                            // Se está bloqueando el documento, debe permitir la actualización
+                            locked_by_user = true;
+                        }
+
+                        // Comprueba que el documento está bloqueado en la BBDD por el usuario y el local no
+                        if (locked_by_user && !local_locked)
+                        {
+                            QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
+                        }
 
                         if (!locked_by_user)
                         {
@@ -1615,7 +1636,7 @@ namespace CouchDBManager
                     if (this->get_remote_conn())
                     {
                         // Comprueba que la entidad está bloqueada por el usuario actual
-                        if (!this->is_locked_by_user<T>(&persisted))
+                        if (!this->is_locked_by_user<T>(entity))
                         {
                             QString err = QString(Q_FUNC_INFO) + " FATAL The entity is not locked by the current user.";
 
@@ -1983,7 +2004,7 @@ namespace CouchDBManager
             if (this->is_locked_by_user<T>(entity, locked_by))
             {
                 QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, false));
-                QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
+//                QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
 
                 CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
                 went_ok = resp->get_went_ok();
