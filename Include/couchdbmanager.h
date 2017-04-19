@@ -1436,13 +1436,13 @@ namespace CouchDBManager
                     int persisted_version = 0;
                     int entity_version = 0;
                     bool locked_by_user = true;
+                    bool local_locked = false;
 
                     this->read<T>(entity->get_id(), QString(), &persisted);
 
                     // Comprueba si la conexión es remota
                     if (this->get_remote_conn())
                     {
-                        bool local_locked = false;
                         bool persisted_locked = false;
                         QString local_locked_by;
 
@@ -1458,12 +1458,6 @@ namespace CouchDBManager
                         {
                             // Se está bloqueando el documento, debe permitir la actualización
                             locked_by_user = true;
-                        }
-
-                        // Comprueba que el documento está bloqueado en la BBDD por el usuario y el local no
-                        if (locked_by_user && !local_locked)
-                        {
-                            QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
                         }
 
                         if (!locked_by_user)
@@ -1553,6 +1547,12 @@ namespace CouchDBManager
                 if (result.isNull() || result.isEmpty())
                 {
                     qDebug() << "# Errors?: " << this->error_string;
+
+                    // Comprueba que el documento está bloqueado en la BBDD por el usuario y el local no
+                    if (locked_by_user && !local_locked)
+                    {
+                        QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
+                    }
 
                     response->set_went_ok(false);
                     response->set_response(this->error_string);
