@@ -1868,8 +1868,10 @@ namespace CouchDBManager
 
             bool went_ok = false;
             bool ent_locked;
+            QString ent_locked_by;
 
             QMetaObject::invokeMethod(entity, "get_locked", Q_RETURN_ARG(bool, ent_locked));
+            QMetaObject::invokeMethod(entity, "get_locked_by", Q_RETURN_ARG(QString, ent_locked_by));
 
             if (!ent_locked)
             {
@@ -1878,6 +1880,12 @@ namespace CouchDBManager
 
                 CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
                 went_ok = resp->get_went_ok();
+
+                if (!went_ok)
+                {
+                    QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, ent_locked));
+                    QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ent_locked_by));
+                }
 
                 delete resp;
             }
@@ -1891,7 +1899,7 @@ namespace CouchDBManager
             }
             else
             {
-                QString err = QString(Q_FUNC_INFO) + " FATAL Entity is already locked by another user.";
+                QString err = QString(Q_FUNC_INFO) + " ERROR Entity is already locked by another user.";
 
                 this->set_error_string(err);
 
@@ -1948,8 +1956,10 @@ namespace CouchDBManager
 
             bool went_ok = false;
             bool ent_locked;
+            QString ent_locked_by;
 
             QMetaObject::invokeMethod(entity, "get_locked", Q_RETURN_ARG(bool, ent_locked));
+            QMetaObject::invokeMethod(entity, "get_locked_by", Q_RETURN_ARG(QString, ent_locked_by));
 
             if (this->is_locked_by_user<T>(entity, locked_by))
             {
@@ -1959,11 +1969,17 @@ namespace CouchDBManager
                 CouchDBManager::DBManagerResponse* resp = this->update<T>(entity);
                 went_ok = resp->get_went_ok();
 
+                if (!went_ok)
+                {
+                    QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, ent_locked));
+                    QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ent_locked_by));
+                }
+
                 delete resp;
             }
             else if (ent_locked)
             {
-                QString err = QString(Q_FUNC_INFO) + " FATAL Entity locked by another user.";
+                QString err = QString(Q_FUNC_INFO) + " ERROR Entity locked by another user.";
 
                 this->set_error_string(err);
 
