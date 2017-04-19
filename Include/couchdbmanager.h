@@ -1435,7 +1435,7 @@ namespace CouchDBManager
                     T persisted;
                     int persisted_version = 0;
                     int entity_version = 0;
-                    bool locked_by_user = false;
+                    bool locked_by_user = true;
 
                     this->read<T>(entity->get_id(), QString(), &persisted);
 
@@ -1443,7 +1443,9 @@ namespace CouchDBManager
                     if (this->get_remote_conn())
                     {
                         // Comprueba que la entidad está bloqueada por el usuario actual
-                        if (!this->is_locked_by_user<T>(&persisted))
+                        locked_by_user = this->is_locked_by_user<T>(&persisted);
+
+                        if (!locked_by_user)
                         {
                             QString err = QString(Q_FUNC_INFO) + " FATAL The entity is not locked by the current user.";
 
@@ -1476,7 +1478,7 @@ namespace CouchDBManager
                         }
                     }
 
-                    if (unlock)
+                    if (locked_by_user && unlock)
                     {
                         QMetaObject::invokeMethod(entity, "set_locked", Q_ARG(bool, false));
                         QMetaObject::invokeMethod(entity, "set_locked_by", Q_ARG(QString, ""));
@@ -1602,15 +1604,32 @@ namespace CouchDBManager
                 this->set_error_string(err);
 
                 qCritical() << err;
-//                qFatal(err.toStdString().c_str());
                 response->set_went_ok(false);
                 response->set_response(err);
             }
             else
             {
-//                QJsonObject json_object;
+                if (this->is_versionable_entity(entity))
+                {
+                    // Comprueba si la conexión es remota
+                    if (this->get_remote_conn())
+                    {
+                        // Comprueba que la entidad está bloqueada por el usuario actual
+                        if (!this->is_locked_by_user<T>(&persisted))
+                        {
+                            QString err = QString(Q_FUNC_INFO) + " FATAL The entity is not locked by the current user.";
 
-//                entity->write(&json_object);
+                            this->set_error_string(err);
+
+                            qCritical() << err;
+                            qDebug() << "<" << Q_FUNC_INFO;
+                            response->set_went_ok(false);
+                            response->set_response(err);
+
+                            return response;
+                        }
+                    }
+                }
 
                 QString id = entity->get_id(); //json_object["_id"].toString();
                 QString rev = entity->get_rev(); //json_object["_rev"].toString();
