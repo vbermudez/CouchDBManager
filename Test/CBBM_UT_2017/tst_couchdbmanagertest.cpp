@@ -44,9 +44,11 @@ private Q_SLOTS:
     void unlockVersionableEntity();
     void lockAndUpdateVersionableEntity();
     void lockVersionableEntityUsingDifferentUser();
+    void tryToLockVersionableEntityUsingDifferentUser();
     void tryToLockVersionableEntityUsingAnotherUser();
     void tryToLUnlockVersionableEntityUsingAnotherUser();
     void unlockVersionableEntityUsingDifferentUser();
+    void tryToLUnlockVersionableEntityUsingDifferentUser();
 
     void cleanupTestCase();
 };
@@ -58,9 +60,11 @@ CouchDBManagerTest::CouchDBManagerTest()
     exec.insert("CouchDBManagerTest::unlockVersionableEntity", false);
     exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", false);
     exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingDifferentUser", false);
     exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser", false);
     exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser", false);
     exec.insert("CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingDifferentUser", false);
 
     db = new CouchDBManager::DBManager(this);
 
@@ -235,6 +239,27 @@ void CouchDBManagerTest::lockVersionableEntityUsingDifferentUser()
     QVERIFY2(car.get_locked_by() != usr, "Incorrect user");
 }
 
+void CouchDBManagerTest::tryToLockVersionableEntityUsingDifferentUser()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My Car", "Incorrect name");
+
+    bool locked = db->lock<Car>(&car, "usuario");
+
+    QVERIFY2(!locked, "Entity locked");
+    QVERIFY2(db->get_error_string().isEmpty(), "Error generated");
+}
+
 void CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser()
 {
     if (skip(NAME)) QSKIP("Prueba no necesaria");
@@ -283,6 +308,7 @@ void CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser()
     QVERIFY2(!car.get_locked_by().isEmpty(), "User empty");
     QVERIFY2(car.get_locked(), "Entity unlocked");
     QVERIFY2(car.get_locked_by() != "distinto", "Incorrect user");
+    QVERIFY2(!db->get_error_string().isEmpty(), "Error not generated");
 }
 
 void CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser()
@@ -311,6 +337,34 @@ void CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser()
     QVERIFY2(unlocked, "Entity not unlocked");
     QVERIFY2(car.get_locked_by().isEmpty(), "User not empty");
     QVERIFY2(!car.get_locked(), "Entity not unlocked");
+}
+
+void CouchDBManagerTest::tryToLUnlockVersionableEntityUsingDifferentUser()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My Car", "Incorrect name");
+
+    CouchDBManager::UserContext* uc = db->user_context();
+    QString usr = uc->get_userCtx().name;
+
+    QVERIFY2(!car.get_locked(), "Entity locked");
+    QVERIFY2(car.get_locked_by().isEmpty(), "Incorrect user");
+
+    bool unlocked = db->unlock<Car>(&car, "usuario");
+
+    QVERIFY2(!unlocked, "Entity unlocked");
+    QVERIFY2(car.get_locked_by().isEmpty(), "User not empty");
+    QVERIFY2(db->get_error_string().isEmpty(), "Error generated");
 }
 
 void CouchDBManagerTest::cleanupTestCase()
