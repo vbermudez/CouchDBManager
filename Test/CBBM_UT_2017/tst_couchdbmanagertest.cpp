@@ -37,8 +37,7 @@ public:
     CouchDBManagerTest();
 
 private Q_SLOTS:
-    void configureObject();
-    void userLogin();
+    void initTestCase();
 
     void createEntity();
     void lockVersionableEntity();
@@ -49,18 +48,17 @@ private Q_SLOTS:
     void tryToLUnlockVersionableEntityUsingAnotherUser();
     void unlockVersionableEntityUsingDifferentUser();
 
-    void userLogout();
-    void destroyManager();
+    void cleanupTestCase();
 };
 
 CouchDBManagerTest::CouchDBManagerTest()
 {
-    exec.insert("CouchDBManagerTest::createEntity", true);
+    exec.insert("CouchDBManagerTest::createEntity", false);
     exec.insert("CouchDBManagerTest::lockVersionableEntity", false);
     exec.insert("CouchDBManagerTest::unlockVersionableEntity", false);
     exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", false);
-    exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", true);
-    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser", true);
+    exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser", false);
     exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser", false);
     exec.insert("CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser", false);
 
@@ -91,20 +89,12 @@ void CouchDBManagerTest::sleep(int ms)
 #endif
 }
 
-void CouchDBManagerTest::configureObject()
+void CouchDBManagerTest::initTestCase()
 {
     db->set_server_address("http://localhost:5984");
     db->set_database_name("aunia");
     db->set_timeout(5000);
 
-    QVERIFY2(db->get_server_address() == "http://localhost:5984", "Incorrect server address");
-    QVERIFY2(db->get_database_name() == "aunia", "Incorrect database name");
-    QVERIFY2(QString(db->metaObject()->className()) == "CouchDBManager::DBManager", "Object is not DBManager");
-    QVERIFY2(db->get_timeout() == 5000, "Incorrect timeout");
-}
-
-void CouchDBManagerTest::userLogin()
-{
     QStringList roles;
     bool logged_in = db->login("root", "root", roles);
 
@@ -114,10 +104,7 @@ void CouchDBManagerTest::userLogin()
 
 void CouchDBManagerTest::createEntity()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -139,10 +126,7 @@ void CouchDBManagerTest::createEntity()
 
 void CouchDBManagerTest::lockVersionableEntity()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -167,10 +151,7 @@ void CouchDBManagerTest::lockVersionableEntity()
 
 void CouchDBManagerTest::unlockVersionableEntity()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -198,10 +179,7 @@ void CouchDBManagerTest::unlockVersionableEntity()
 
 void CouchDBManagerTest::lockAndUpdateVersionableEntity()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -234,10 +212,7 @@ void CouchDBManagerTest::lockAndUpdateVersionableEntity()
 
 void CouchDBManagerTest::lockVersionableEntityUsingDifferentUser()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -262,10 +237,7 @@ void CouchDBManagerTest::lockVersionableEntityUsingDifferentUser()
 
 void CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -286,10 +258,7 @@ void CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser()
 
 void CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -318,10 +287,7 @@ void CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser()
 
 void CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser()
 {
-    if (skip(NAME))
-    {
-        QSKIP("Prueba no necesaria");
-    }
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
 
     Car car;
 
@@ -347,15 +313,12 @@ void CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser()
     QVERIFY2(!car.get_locked(), "Entity not unlocked");
 }
 
-void CouchDBManagerTest::userLogout()
+void CouchDBManagerTest::cleanupTestCase()
 {
     bool logged_out = db->logout();
 
     QVERIFY2(logged_out, "Not logged oun");
-}
 
-void CouchDBManagerTest::destroyManager()
-{
     delete db;
 }
 
