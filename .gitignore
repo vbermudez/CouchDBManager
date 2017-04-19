@@ -1,5 +1,6 @@
 Bin
 Test/Bin
+Test/Bin2017
 Test/**/*.pro.*
 Make/**
 !Make/CouchDBManager.pro
