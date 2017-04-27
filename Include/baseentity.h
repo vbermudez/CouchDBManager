@@ -60,6 +60,7 @@ namespace CouchDBManager
         QString collection;
         QString name;
         QString description;
+        QList<BaseEntity*> _deleted_objects;
 
         /**
          * @brief test_inner_object Comprueba que un objeto tiene una propiedad con un valor específico.
@@ -152,6 +153,32 @@ namespace CouchDBManager
             }
 
             return NULL;
+        }
+
+
+        template <class T>
+        void add_deleted_object(T *_del_obj)
+        {
+            _deleted_objects.append((BaseEntity*)(_del_obj));
+        }
+
+        template <class T>
+        QList<T*> get_deleted_object()
+        {
+            //Vector para castear los objetos
+            QList<T*> _cast_deleted_objects;
+            foreach (CouchDBManager::BaseEntity* _obj, _deleted_objects)
+            {
+                //Casteamos lo objetos y los anadimos
+                T* _cast_object = qobject_cast<T*>(_obj);
+                if (_cast_object)
+                {
+                    _cast_deleted_objects.append(_cast_object);
+                }
+
+            }
+
+            return _cast_deleted_objects;
         }
 
     public slots:
