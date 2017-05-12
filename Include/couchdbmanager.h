@@ -1,7 +1,7 @@
 //! @addtogroup CouchDBManager
 //! @{
 //! @file "couchdbmanager.h"
-//! @brief DefiniciÛn de la clase de acceso a CouchDB.
+//! @brief Definici√≥n de la clase de acceso a CouchDB.
 //
 // COMPANY: ......... Construcciones y Auxiliar de Ferrocarriles S.A.
 //
@@ -26,13 +26,13 @@
 //
 // $Log: couchdbmanager.h,v $
 // Revision 1.24  2017/02/26 23:55:25  jgurrutxaga
-// Corregir la gestiÛn del timeout y la terminaciÛn de la peticiÛn al servidor. Liberar recursos en caso de timeout.
+// Corregir la gesti√≥n del timeout y la terminaci√≥n de la petici√≥n al servidor. Liberar recursos en caso de timeout.
 //
 // Revision 1.23  2017/02/24 09:37:30  jgurrutxaga
 // Disable "read timeout" when readyRead signal is received from QNetworkReply
 //
 // Revision 1.22  2017/02/22 15:32:36  jgurrutxaga
-// Error en la gestiÛn del timeout provoca que la respuesta del servidor quede entrecortada
+// Error en la gesti√≥n del timeout provoca que la respuesta del servidor quede entrecortada
 //
 // Revision 1.21  2017/01/19 20:47:41  jgurrutxaga
 // Uso de referencias en foreach
@@ -53,66 +53,66 @@
 // - Victor updates
 //
 // Revision 1.15  2016/11/10 11:03:28  jgurrutxaga
-// AÒadir funciÛn list_users
+// A√±adir funci√≥n list_users
 //
 // Revision 1.14  2016/10/03 07:11:59  jgurrutxaga
-// -AÒadir la funciÛn registerTypes()al API de CouchDBManager para el registro de las entidades.
-// -AÒadir el password al guradar los datos de un usuario y evitar la lectura de este campo.
+// -A√±adir la funci√≥n registerTypes()al API de CouchDBManager para el registro de las entidades.
+// -A√±adir el password al guradar los datos de un usuario y evitar la lectura de este campo.
 //
 // Revision 1.13  2016/09/27 15:51:36  jgurrutxaga
-// - Mantener la sesiÛn viva.
-// - Modificar ·rbol de objetos derivados de QObject para facilitar un poco la gestiÛn de memoria
+// - Mantener la sesi√≥n viva.
+// - Modificar √°rbol de objetos derivados de QObject para facilitar un poco la gesti√≥n de memoria
 // - Modificaciones BaseReference
 //
 // Revision 1.12  2016/08/20 09:00:50  jgurrutxaga
-// - AÒadir funciÛn is_valid a BaseEntity y BaseUser para comprobar si un objeto ha sido inicializado. La comprobaciÛn
+// - A√±adir funci√≥n is_valid a BaseEntity y BaseUser para comprobar si un objeto ha sido inicializado. La comprobaci√≥n
 // se realiza comprobando si el id del objeto es Null o Empty.
-// - AÒadir sobrecarga de la funciÛn is_online que usa el servidor y base de datso actuales
+// - A√±adir sobrecarga de la funci√≥n is_online que usa el servidor y base de datso actuales
 //
 // Revision 1.11  2016/08/09 10:53:39  jgurrutxaga
-// Cambios en replicaciÛn, memory leaks y logout
+// Cambios en replicaci√≥n, memory leaks y logout
 //
 // Revision 1.10  2016/07/27 12:07:12  jmonasterio
 // - BUGS: NULL entities
 // - GET_INNER_ENTITY function
 //
 // Revision 1.9  2016/07/19 06:35:00  izalakain
-// Modificaciones para el versionado y replicaciÛn
+// Modificaciones para el versionado y replicaci√≥n
 //
 // Revision 1.8  2016/07/14 14:28:44  izalakain
-// Se aÒade funciÛn de generaciÛn de fecha para estandarizar formato fecha en BD. Se aÒaden las propiedades working a
+// Se a√±ade funci√≥n de generaci√≥n de fecha para estandarizar formato fecha en BD. Se a√±aden las propiedades working a
 // la entidad VersionableEntity
 //
 // Revision 1.7  2016/07/13 13:31:33  izalakain
-// CorrecciÛn de BUGs en BaseReference e inclusiÛn de la clase BaseUser
+// Correcci√≥n de BUGs en BaseReference e inclusi√≥n de la clase BaseUser
 //
 // Revision 1.6  2016/07/13 05:45:01  izalakain
-// CorrecciÛn de BUGs como la recuperaciÛn de elementos relacionados y las funciones relacionadas con la creaciÛn de
-// usuarios couhch. Se aÒaden las clases basereference y replicationconfig.
+// Correcci√≥n de BUGs como la recuperaci√≥n de elementos relacionados y las funciones relacionadas con la creaci√≥n de
+// usuarios couhch. Se a√±aden las clases basereference y replicationconfig.
 //
 // Revision 1.5  2016/07/12 10:05:25  izalakain
-// CorrecciÛn de varios BUGS, recuperaciÛn de entidades, filtros etc.
+// Correcci√≥n de varios BUGS, recuperaci√≥n de entidades, filtros etc.
 //
 // Revision 1.4  2016/07/01 08:12:29  izalakain
-// CorrecciÛn de errores y funciones de autentificaciÛn de usuarios
+// Correcci√≥n de errores y funciones de autentificaci√≥n de usuarios
 //
 // Revision 1.3  2016/06/17 12:01:37  jmonasterio
 // New architecture
 //
 // Revision 0.0.4   2016/05/31 12:46:00 vbermudez@xi-tek.com
 // Cambios realizados:
-// - AÒadido el mÈtodo "list"
-// - Modificados los valores de retornos de los mÈtodos "all", "view", "list" a QList<QVariant>
-// - AÒadido control de errores a travÈs de propiedades de la clase
-// - AÒadidos los comentarios
+// - A√±adido el m√©todo "list"
+// - Modificados los valores de retornos de los m√©todos "all", "view", "list" a QList<QVariant>
+// - A√±adido control de errores a trav√©s de propiedades de la clase
+// - A√±adidos los comentarios
 //
 // Revision 0.0.3   2016/05/24 15:24:50 vbermudez@xi-tek.com
 // Cambios realizados:
-// - AÒadido el mÈtodo "bulk_docs"
+// - A√±adido el m√©todo "bulk_docs"
 //
 // Revision 0.0.2   2016/05/24 14:32:46 vbermudez@xi-tek.com
 // Cambios realizados:
-// - AÒadidos los mÈtodos "all" y "view"
+// - A√±adidos los m√©todos "all" y "view"
 //
 #ifndef COUCHDBMANAGER_H
 #define COUCHDBMANAGER_H
@@ -161,9 +161,9 @@
 namespace CouchDBManager
 {
     /**
-     * @brief La clase DBManager extiende a QObject para garantizar la completa intregraciÛn en el framework QT.
-     * Gestiona las distintas operaciones b·sicas de CouchDB tales como leer, crear, modificar y borrar documentos.
-     * Adem·s facilita la integraciÛn con el resto de operaciones de CouchDB y es capaz de transformar las respuestas
+     * @brief La clase DBManager extiende a QObject para garantizar la completa intregraci√≥n en el framework QT.
+     * Gestiona las distintas operaciones b√°sicas de CouchDB tales como leer, crear, modificar y borrar documentos.
+     * Adem√°s facilita la integraci√≥n con el resto de operaciones de CouchDB y es capaz de transformar las respuestas
      * de los servicios web en objetos QVariant.
      * @author vbermudez@xi-tek.com
      * @date 12/05/2016
@@ -201,7 +201,7 @@ namespace CouchDBManager
         };
 
         /**
-         * @brief waitForReply Sincroniza la peticiÛn HTTP y controla el timeout.
+         * @brief waitForReply Sincroniza la petici√≥n HTTP y controla el timeout.
          * @param reply Objeto QNetworkReply.
          * @return false si se ha superado el timeout configurado.
          */
@@ -213,41 +213,41 @@ namespace CouchDBManager
         QString get_url();
         /**
          * @brief get_url Obtiene la url del servidor CouhDB bien formada.
-         * @param only_root Especifica si debe responder sÛlo con la raÌz de la url, sin incluir la base de datos.
+         * @param only_root Especifica si debe responder s√≥lo con la ra√≠z de la url, sin incluir la base de datos.
          * @return QString con la url.
          */
         QString get_url(bool only_root);
         /**
          * @brief get_url Obtiene la url del servidor CouhDB bien formada.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
          * @return QString con la url.
          */
         QString get_url(const QString& partial);
         /**
          * @brief get_url Obtiene la url del servidor CouhDB bien formada.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
          * @param use_context Especifica si debe utilizar la raiz de contexto o no.
          * @return QString con la url.
          */
         QString get_url(const QString& partial, bool use_context);
         /**
          * @brief get_url Obtiene la url del servidor CouhDB bien formada.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString, para aÒadir en la url.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString, para a√±adir en la url.
          * @return QString con la url.
          */
         QString get_url(const QString& partial, const QString& query_string);
         /**
          * @brief get_url Obtiene la url del servidor CouhDB bien formada.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString, para aÒadir en la url.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString, para a√±adir en la url.
          * @param use_context Especifica si debe utilizar la raiz de contexto o no.
          * @return QString con la url.
          */
         QString get_url(const QString& partial, const QString& query_string, bool use_context);
 
         /**
-         * @brief set_remote_conn Comprueba si la conexiÛn es local o remota
+         * @brief set_remote_conn Comprueba si la conexi√≥n es local o remota
          */
         void set_remote_conn();
         /**
@@ -262,97 +262,97 @@ namespace CouchDBManager
          */
         void set_common_headers(QNetworkRequest* request, bool use_auth_cookie);
         /**
-         * @brief request Configura y envÌa una peticiÛn HTTP.
-         * @param url Objeto QUrl con la direcciÛn del recurso.
-         * @param ba_data QByteArray con los datos a enviar en la peticiÛn
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param method MÈtodo de la peticiÛn HTTP.
+         * @brief request Configura y env√≠a una petici√≥n HTTP.
+         * @param url Objeto QUrl con la direcci√≥n del recurso.
+         * @param ba_data QByteArray con los datos a enviar en la petici√≥n
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param method M√©todo de la petici√≥n HTTP.
          * @return QString con la respuesta del servicio.
          */
         QString request(const QUrl& url, const QByteArray& ba_data, const QString& partial, CouchDBManager::DBManager::HTTP_METHOD method);
         /**
-         * @brief do_get EnvÌa una peticiÛn GET a CouchDB.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString, para aÒadir en la url.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @brief do_get Env√≠a una petici√≥n GET a CouchDB.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString, para a√±adir en la url.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_get(const QString& partial, const QString& query_string);
         /**
-         * @brief do_get EnvÌa una peticiÛn GET a CouchDB.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString, para aÒadir en la url.
+         * @brief do_get Env√≠a una petici√≥n GET a CouchDB.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString, para a√±adir en la url.
          * @param use_context Especifica si debe utilizar la raiz de contexto o no.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_get(const QString& partial, const QString& query_string, bool use_context);
         /**
-         * @brief do_post EnvÌa una peticiÛn POST a CouchDB.
-         * @param data Son los datos a enviar en la peticiÛn. DeberÌa ser un texto JSON o con formato QueryString.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @brief do_post Env√≠a una petici√≥n POST a CouchDB.
+         * @param data Son los datos a enviar en la petici√≥n. Deber√≠a ser un texto JSON o con formato QueryString.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_post(const QString& data);
         /**
-         * @brief do_post EnvÌa una peticiÛn POST a CouchDB.
-         * @param data Son los datos a enviar en la peticiÛn. DeberÌa ser un texto JSON o con formato QueryString.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @brief do_post Env√≠a una petici√≥n POST a CouchDB.
+         * @param data Son los datos a enviar en la petici√≥n. Deber√≠a ser un texto JSON o con formato QueryString.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_post(const QString& data, const QString& partial);
         /**
-         * @brief do_post EnvÌa una peticiÛn POST a CouchDB.
-         * @param data Son los datos a enviar en la peticiÛn. DeberÌa ser un texto JSON o con formato QueryString.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
+         * @brief do_post Env√≠a una petici√≥n POST a CouchDB.
+         * @param data Son los datos a enviar en la petici√≥n. Deber√≠a ser un texto JSON o con formato QueryString.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
          * @param use_context Especifica si debe utilizar la raiz de contexto o no.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_post(const QString& data, const QString& partial, bool use_context);
         /**
-         * @brief do_put EnvÌa una peticiÛn PUT a CouchDB.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param data Son los datos a enviar en la peticiÛn. DeberÌa ser un texto JSON o con formato QueryString.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @brief do_put Env√≠a una petici√≥n PUT a CouchDB.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param data Son los datos a enviar en la petici√≥n. Deber√≠a ser un texto JSON o con formato QueryString.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_put(const QString& partial, const QString& data);
         /**
-         * @brief do_delete EnvÌa una peticiÛn DELETE a CouchDB.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString, para aÒadir en la url.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @brief do_delete Env√≠a una petici√≥n DELETE a CouchDB.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString, para a√±adir en la url.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_delete(const QString& partial, const QString& query_string);
         /**
-         * @brief do_delete EnvÌa una peticiÛn DELETE a CouchDB.
-         * @param partial Especifica una ruta parcial para aÒadir a la url.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString, para aÒadir en la url.
+         * @brief do_delete Env√≠a una petici√≥n DELETE a CouchDB.
+         * @param partial Especifica una ruta parcial para a√±adir a la url.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString, para a√±adir en la url.
          * @param use_context Especifica si debe utilizar la raiz de contexto o no.
-         * @return QString con el resultado de la consulta. DeberÌa ser un texto JSON.
+         * @return QString con el resultado de la consulta. Deber√≠a ser un texto JSON.
          */
         QString do_delete(const QString& partial, const QString& query_string, bool use_context);
 
         /**
          * @brief string_2_json_object Transforma una cadena JSON en un objeto QJsonObject.
          * @param str Cadena con el texto JSON a tranformar.
-         * @param jason_parse_error Es igual a QJsonParseError:NoError sin se ha producido ning˙n error.
+         * @param jason_parse_error Es igual a QJsonParseError:NoError sin se ha producido ning√∫n error.
          * @return QJsonObject que representa la cadena JSON.
          */
         QJsonObject string_2_json_object(const QString& str, QJsonParseError* json_parse_error);
         /**
          * @brief string_2_json_array Transforma una cadena JSON en un objeto QJsonArray.
          * @param str Cadena con el texto JSON a tranformar.
-         * @param jason_parse_error Es igual a QJsonParseError:NoError sin se ha producido ning˙n error.
+         * @param jason_parse_error Es igual a QJsonParseError:NoError sin se ha producido ning√∫n error.
          * @return QJsonArray que representa la cadena JSON.
          */
         QJsonArray string_2_json_array(const QString& str, QJsonParseError* json_parse_error);
         /**
          * @brief json_object_2_string Transforma un objeto QJsonObject en una cadena JSON.
          * @param obj Objeto que deriva de QObject.
-         * @return QString con la representaciÛn JSON del objeto.
+         * @return QString con la representaci√≥n JSON del objeto.
          */
         QString json_object_2_string(const QJsonObject& obj);
 
         /**
-         * @brief update_entity_from_bulk_docs Actualiza los _id y _rev de las entidades seg˙n el
-         * id y rev resultante de la operaciÛn _bulk_docs.
+         * @brief update_entity_from_bulk_docs Actualiza los _id y _rev de las entidades seg√∫n el
+         * id y rev resultante de la operaci√≥n _bulk_docs.
          * @param entity Objeto que deriva de BaseEntity.
          * @param id QString con el id del objeto.
          * @param rev QString con la rev del objeto.
@@ -367,8 +367,8 @@ namespace CouchDBManager
         void update_related_entities_from_bulk_docs(CouchDBManager::BaseEntity* entity, QJsonArray json_array);
 
         /**
-         * @brief update_entity_from_bulk_docs Actualiza los _id y _rev de las entiidades seg˙n el
-         * resultado de la operaciÛn _bulk_docs.
+         * @brief update_entity_from_bulk_docs Actualiza los _id y _rev de las entiidades seg√∫n el
+         * resultado de la operaci√≥n _bulk_docs.
          * @param entity Objeto que deriva de BaseEntity.
          * @param bd_result Objeto QJsonObject con el resultadao de _bulk_docs.
          */
@@ -430,7 +430,7 @@ namespace CouchDBManager
          * @brief object_2_json Transforma un objeto derivador de BaseObject en un objeto QJsonObject.
          * @param object Objeto que dervica de BaseObject.
          * @param relation_as_entity Fuerza a tratar un RelationEntity como si fuera un BaseEntity.
-         * @param gen_uuid Fuerza la creaciÛn de UUID para la entidad antes de transformarla a JSON.
+         * @param gen_uuid Fuerza la creaci√≥n de UUID para la entidad antes de transformarla a JSON.
          * @param json Objeto QJsonObject.
          */
         template <class T>
@@ -445,7 +445,7 @@ namespace CouchDBManager
          * @brief object_2_json Transforma un objeto derivador de BaseObject en un objeto QJsonObject.
          * @param object Objeto que dervica de BaseObject.
          * @param relation_as_entity Fuerza a tratar un RelationEntity como si fuera un BaseEntity.
-         * @param gen_uuid Fuerza la creaciÛn de UUID para la entidad antes de transformarla a JSON.
+         * @param gen_uuid Fuerza la creaci√≥n de UUID para la entidad antes de transformarla a JSON.
          * @param load_relations Fuerza el proceso recursivo de relaciones.
          * @param json Objeto QJsonObject.
          */
@@ -514,7 +514,7 @@ namespace CouchDBManager
 
                     if (value_list.isEmpty())
                     {
-                        qDebug() << "# El array original est· vacio.";
+                        qDebug() << "# El array original est√° vacio.";
 
                         continue;
                     }
@@ -569,7 +569,7 @@ namespace CouchDBManager
                                 }
                                 else
                                 {
-                                        qDebug() << "# Referencia circular detectada. No se procesar· la relaciÛn por tratarse del mismo documento:" << rel_ent_class_name << related_entity->get_collection() << related_entity->get_id();
+                                        qDebug() << "# Referencia circular detectada. No se procesar√° la relaci√≥n por tratarse del mismo documento:" << rel_ent_class_name << related_entity->get_collection() << related_entity->get_id();
                                     }
                                 }
                                 else
@@ -649,14 +649,14 @@ namespace CouchDBManager
 
                     if (value.isNull() || !value.isValid())
                     {
-                        qDebug() << "# Es nulo o inv·lido.";
+                        qDebug() << "# Es nulo o inv√°lido.";
 
                         continue;
                     }
 
 //                    if ( QJsonValue::fromVariant(value).isNull() )
 //                    {
-//                        qDebug() << "# Es nulo o inv·lido.";
+//                        qDebug() << "# Es nulo o inv√°lido.";
 
 //                        continue;
 //                    }
@@ -735,7 +735,7 @@ namespace CouchDBManager
 
                         if (is_a_rel_ent)
                         {
-                            qDebug() << "# Se aÒade id y version de la entidad relacionada por ser un RelationEntity.";
+                            qDebug() << "# Se a√±ade id y version de la entidad relacionada por ser un RelationEntity.";
 
                             QJsonObject relation_property;
                             QString _id = item_json["_id"].toString();
@@ -902,7 +902,7 @@ namespace CouchDBManager
             else
             {
                 const QMetaObject* meta_object = QMetaType::metaObjectForType(type_id);
-                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG⁄N EL CORREO DE Jon Gurrutxaga del 23/11/2016
+                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG√öN EL CORREO DE Jon Gurrutxaga del 23/11/2016
                 QObject* instance = meta_object->newInstance( Q_ARG(QObject*, this->parent()) );
                 is_rel = this->is_relation_entity(instance);
 
@@ -930,8 +930,8 @@ namespace CouchDBManager
         /**
          * @brief DBManager Contructor
          * @param parent QObject padre.
-         * @param address Url raÌz del servidor CouchDB. Ejplo: http://localhost:5984.
-         * @param db_name Nombre de la base de datos sobre la que se act˙a.
+         * @param address Url ra√≠z del servidor CouchDB. Ejplo: http://localhost:5984.
+         * @param db_name Nombre de la base de datos sobre la que se act√∫a.
          */
         DBManager(const QString& address, const QString& db_name, QObject *parent = 0) : server_address(address), database_name(db_name), QObject(parent) {
             this->initialize();
@@ -946,7 +946,7 @@ namespace CouchDBManager
          * @return int Identificador del tipo.
          */
         template <typename T>
-        int registerType()
+        static int registerType()
         {
             qDebug() << ">" << Q_FUNC_INFO;
 
@@ -969,13 +969,13 @@ namespace CouchDBManager
         }
 
         /**
-         * @brief set_server_address Establece la url  raÌz del servidor CouchDB.
-         * @param address Url raÌz del servidor CouchDB. Ejplo: http://localhost:5984.
+         * @brief set_server_address Establece la url  ra√≠z del servidor CouchDB.
+         * @param address Url ra√≠z del servidor CouchDB. Ejplo: http://localhost:5984.
          */
         void set_server_address(const QString& address);
         /**
-         * @brief get_server_address Recupera la url  raÌz del servidor CouchDB.
-         * @return QString con la url  raÌz del servidor CouchDB.
+         * @brief get_server_address Recupera la url  ra√≠z del servidor CouchDB.
+         * @return QString con la url  ra√≠z del servidor CouchDB.
          */
         QString get_server_address() const;
         /**
@@ -989,8 +989,8 @@ namespace CouchDBManager
          */
         QString get_database_name() const;
         /**
-         * @brief set_auth_cookie Establece la cookie de sesiÛn.
-         * @param a_auth_cookie Cookie de sesiÛn.
+         * @brief set_auth_cookie Establece la cookie de sesi√≥n.
+         * @param a_auth_cookie Cookie de sesi√≥n.
          */
         void set_auth_cookie(const QString& a_auth_cookie);
         /**
@@ -999,18 +999,18 @@ namespace CouchDBManager
          */
         QString get_auth_cookie() const;
         /**
-         * @brief set_remote_conn Fuerza el tipo de conexiÛn a remota o local.
-         * @param a_remote_conn Si es true, la conexiÛn se tratar· como remota.
+         * @brief set_remote_conn Fuerza el tipo de conexi√≥n a remota o local.
+         * @param a_remote_conn Si es true, la conexi√≥n se tratar√° como remota.
          */
         void set_remote_conn(bool a_remote_conn);
         /**
-         * @brief get_remote_conn Recupera el tipo de conexiÛn (remota o local).
-         * @return true si la conexiÛn es remota.
+         * @brief get_remote_conn Recupera el tipo de conexi√≥n (remota o local).
+         * @return true si la conexi√≥n es remota.
          */
         bool get_remote_conn() const;
         /**
-         * @brief get_network_error Indica si en la ˙ltima operaciÛn ha existido alg˙n error de comunicaciones.
-         * @return QNetworkReply::NoError si no ha existido ning˙n error.
+         * @brief get_network_error Indica si en la √∫ltima operaci√≥n ha existido alg√∫n error de comunicaciones.
+         * @return QNetworkReply::NoError si no ha existido ning√∫n error.
          */
         QNetworkReply::NetworkError get_network_error() const;
         /**
@@ -1019,13 +1019,13 @@ namespace CouchDBManager
          */
         void set_network_error(const QNetworkReply::NetworkError a_error);
         /**
-         * @brief get_error_string Indica si ha existido alg˙n error en alguna transformciÛn de objetos o JSON.
-         * @return QString con la descripciÛn del error.
+         * @brief get_error_string Indica si ha existido alg√∫n error en alguna transformci√≥n de objetos o JSON.
+         * @return QString con la descripci√≥n del error.
          */
         QString get_error_string() const;
         /**
-         * @brief set_error_string Establece un error de transformaciÛn.
-         * @param a_error_string La descripciÛn del error.
+         * @brief set_error_string Establece un error de transformaci√≥n.
+         * @param a_error_string La descripci√≥n del error.
          */
         void set_error_string(const QString& a_error_string);
         /**
@@ -1046,10 +1046,10 @@ namespace CouchDBManager
         bool is_online();
 
         /**
-         * @brief is_online Comprueba si una serivdor y base de datos existen y est·n online.
-         * @param a_server DirecciÛn del servidor.
+         * @brief is_online Comprueba si una serivdor y base de datos existen y est√°n online.
+         * @param a_server Direcci√≥n del servidor.
          * @param a_database Nombre de la base de datos.
-         * @return true si existe y est· online.
+         * @return true si existe y est√° online.
          */
         bool is_online(const QString& a_server, const QString& a_database);
 
@@ -1207,10 +1207,10 @@ namespace CouchDBManager
             return response;
         }
         /**
-         * @brief read Recupera la ˙ltima revisiÛn de un documento de CouchDB.
-         * @param id Identificador ˙nico del documento.
+         * @brief read Recupera la √∫ltima revisi√≥n de un documento de CouchDB.
+         * @param id Identificador √∫nico del documento.
          * @param entity Instancia de un objeto derivado de BaseEntity.
-         * @return Entidad CouchDBManager::BaseEntity con la informaciÛn recuperada de CouchDB.
+         * @return Entidad CouchDBManager::BaseEntity con la informaci√≥n recuperada de CouchDB.
          */
         template <class  T>
         void read(const QString& id, T* entity)
@@ -1222,11 +1222,11 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief read Recupera la ˙ltima revisiÛn de una versiÛn de un documento de CouchDB.
-         * @param id Identificador ˙nico del documento.
-         * @param version N˙mero de versiÛn del documento;
+         * @brief read Recupera la √∫ltima revisi√≥n de una versi√≥n de un documento de CouchDB.
+         * @param id Identificador √∫nico del documento.
+         * @param version N√∫mero de versi√≥n del documento;
          * @param entity Instancia de un objeto derivado de BaseEntity.
-         * @return Entidad CouchDBManager::BaseEntity con la informaciÛn recuperada de CouchDB.
+         * @return Entidad CouchDBManager::BaseEntity con la informaci√≥n recuperada de CouchDB.
          */
         template <class  T>
         void read(const QString& id, int version, T* entity)
@@ -1238,11 +1238,11 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief read Recupera un documento de CouchDB, seg˙n los par·metro proporcionados.
-         * @param id Identificador ˙nico del documento.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString.
+         * @brief read Recupera un documento de CouchDB, seg√∫n los par√°metro proporcionados.
+         * @param id Identificador √∫nico del documento.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString.
          * @param entity Instancia de un objeto derivado de BaseEntity.
-         * @return Entidad CouchDBManager::BaseEntity con la informaciÛn recuperada de CouchDB.
+         * @return Entidad CouchDBManager::BaseEntity con la informaci√≥n recuperada de CouchDB.
          */
         template <class  T>
         void read(const QString& id, const QString& query_string, T* entity)
@@ -1296,11 +1296,11 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief read_with_relations Recupera la ˙ltima revisiÛn de una versiÛn de un documento de CouchDB, cargando todas sus relaciones.
-         * @param design_document Nombre del Design Document donde est· la vista.
-         * @param id Identificador ˙nico del documento.
+         * @brief read_with_relations Recupera la √∫ltima revisi√≥n de una versi√≥n de un documento de CouchDB, cargando todas sus relaciones.
+         * @param design_document Nombre del Design Document donde est√° la vista.
+         * @param id Identificador √∫nico del documento.
          * @param entity Instancia de un objeto derivado de BaseEntity.
-         * @return Entidad CouchDBManager::BaseEntity con la informaciÛn recuperada de CouchDB.
+         * @return Entidad CouchDBManager::BaseEntity con la informaci√≥n recuperada de CouchDB.
          */
         template <class  T>
         void read_with_relations(const QString& design_document, const QString& id, T* entity)
@@ -1312,12 +1312,12 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief read_with_relations Recupera la ˙ltima revisiÛn de un documento de CouchDB, cargando todas sus relaciones.
-         * @param design_document Nombre del Design Document donde est· la vista.
-         * @param id Identificador ˙nico del documento.
-         * @param version N˙mero de versiÛn del documento;
+         * @brief read_with_relations Recupera la √∫ltima revisi√≥n de un documento de CouchDB, cargando todas sus relaciones.
+         * @param design_document Nombre del Design Document donde est√° la vista.
+         * @param id Identificador √∫nico del documento.
+         * @param version N√∫mero de versi√≥n del documento;
          * @param entity Instancia de un objeto derivado de BaseEntity.
-         * @return Entidad CouchDBManager::BaseEntity con la informaciÛn recuperada de CouchDB.
+         * @return Entidad CouchDBManager::BaseEntity con la informaci√≥n recuperada de CouchDB.
          */
         template <class  T>
         void read_with_relations(const QString& design_document, const QString& id, int version, T* entity)
@@ -1402,7 +1402,7 @@ namespace CouchDBManager
         /**
          * @brief update Actualiza un documento en CouchDB.
          * @param entity Objeto que extiende BaseEntity.
-         * @param unlock Si debe desbloquear la entidad o no. SÛlo aplica a derivados de VersionableEntity.
+         * @param unlock Si debe desbloquear la entidad o no. S√≥lo aplica a derivados de VersionableEntity.
          * @return QJsonObject con la respuesta del servidor. Contiene la nueva _rev.
          */
         template <class T>
@@ -1440,7 +1440,7 @@ namespace CouchDBManager
 
                     this->read<T>(entity->get_id(), QString(), &persisted);
 
-                    // Comprueba si la conexiÛn es remota
+                    // Comprueba si la conexi√≥n es remota
                     if (this->get_remote_conn())
                     {
                         bool local_locked = false;
@@ -1451,17 +1451,17 @@ namespace CouchDBManager
                         QMetaObject::invokeMethod(&persisted, "get_locked", Q_RETURN_ARG(bool, persisted_locked));
                         QMetaObject::invokeMethod(entity, "get_locked_by", Q_RETURN_ARG(QString, local_locked_by));
 
-                        // Comprueba que la entidad de BBDD est· bloqueada por el usuario establecido en la entidad local
+                        // Comprueba que la entidad de BBDD est√° bloqueada por el usuario establecido en la entidad local
                         locked_by_user = this->is_locked_by_user<T>(&persisted, local_locked_by);
 
-                        // Comprueba que el documento de BBDD no est· bloqueado y el local sÌ lo est·
+                        // Comprueba que el documento de BBDD no est√° bloqueado y el local s√≠ lo est√°
                         if (!persisted_locked && local_locked)
                         {
-                            // Se est· bloqueando el documento, debe permitir la actualizaciÛn
+                            // Se est√° bloqueando el documento, debe permitir la actualizaci√≥n
                             locked_by_user = true;
                         }
 
-                        // Comprueba que el documento est· bloqueado en la BBDD por el usuario y el local no
+                        // Comprueba que el documento est√° bloqueado en la BBDD por el usuario y el local no
                         if (locked_by_user && !local_locked)
                         {
                             delete_locked_by = true;
@@ -1639,10 +1639,10 @@ namespace CouchDBManager
             {
                 if (this->is_versionable_entity(entity))
                 {
-                    // Comprueba si la conexiÛn es remota
+                    // Comprueba si la conexi√≥n es remota
                     if (this->get_remote_conn())
                     {
-                        // Comprueba que la entidad est· bloqueada por el usuario actual
+                        // Comprueba que la entidad est√° bloqueada por el usuario actual
                         if (!this->is_locked_by_user<T>(entity))
                         {
                             QString err = QString(Q_FUNC_INFO) + " FATAL The entity is not locked by the current user.";
@@ -1686,7 +1686,7 @@ namespace CouchDBManager
 
         /**
          * @brief view Ejecuta una vista de CouchDB.
-         * @param design_document Nombre del Design Document donde est· la vista.
+         * @param design_document Nombre del Design Document donde est√° la vista.
          * @param view Nombre de la vista.
          * @return Lista de Qvariant con cada fila de doscolumnas: "key" y "value".
          */
@@ -1700,10 +1700,10 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief view Ejecuta una vista de CouchDB. Se pueden enviar par·metros.
-         * @param design_document Nombre del Design Document donde est· la vista.
+         * @brief view Ejecuta una vista de CouchDB. Se pueden enviar par√°metros.
+         * @param design_document Nombre del Design Document donde est√° la vista.
          * @param view Nombre de la vista.
-         * @param query_string Especifica una lista de par·metros, con formato QueryString.
+         * @param query_string Especifica una lista de par√°metros, con formato QueryString.
          * @return Lista de Qvariant con cada fila de dos o tres columnas: "key", "value" y, opcionalmente, "doc".
          */
         template <class T>
@@ -1743,7 +1743,7 @@ namespace CouchDBManager
 
             for (int i = 0; i < docs_array.size(); ++i)
             {
-                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG⁄N EL CORREO DE Jon Gurrutxaga del 23/11/2016
+                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG√öN EL CORREO DE Jon Gurrutxaga del 23/11/2016
                 T* entity = new T(this->parent());
 
                 entity->read(docs_array[i]["doc"].toObject());
@@ -1754,11 +1754,11 @@ namespace CouchDBManager
         }
 
         /**
-         * @brief list Ejecuta una funciÛn de listado de CouchDB.
-         * @param design_document Nombre del Design Document donde est· la funciÛn de listado.
-         * @param list Nombre de la funciÛn de listado.
-         * @param view Nombre de la vista sobre la que se ejecuta la funciÛn de listado.
-         * @return Lista de Qvariant con la representaciÛn de cada objeto JSON encontrado.
+         * @brief list Ejecuta una funci√≥n de listado de CouchDB.
+         * @param design_document Nombre del Design Document donde est√° la funci√≥n de listado.
+         * @param list Nombre de la funci√≥n de listado.
+         * @param view Nombre de la vista sobre la que se ejecuta la funci√≥n de listado.
+         * @return Lista de Qvariant con la representaci√≥n de cada objeto JSON encontrado.
          */
         template <class T>
         void list(const QString& design_document, const QString& list, const QString& view, QList<T*>& result_list)
@@ -1770,16 +1770,16 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief list Ejecuta una funciÛn de listado de CouchDB. Se pueden establecer filtros.
-         * @param design_document Nombre del Design Document donde est· la funciÛn de listado.
-         * @param list Nombre de la funciÛn de listado.
-         * @param view Nombre de la vista sobre la que se ejecuta la funciÛn de listado.
+         * @brief list Ejecuta una funci√≥n de listado de CouchDB. Se pueden establecer filtros.
+         * @param design_document Nombre del Design Document donde est√° la funci√≥n de listado.
+         * @param list Nombre de la funci√≥n de listado.
+         * @param view Nombre de la vista sobre la que se ejecuta la funci√≥n de listado.
          * @param where QSring con una consulta PQL.
-         * PQL: Es una mezcla de SQL b·sico y JavaScript, dÛnde se pueden realizar consultas
+         * PQL: Es una mezcla de SQL b√°sico y JavaScript, d√≥nde se pueden realizar consultas
          * con los operadores de ambos lenguajes. Los valores son case-insentive.
          * Ejplo: name like 'nombre' and (descripcion != 'descripcion' or descripcion like '\s+[d|e].*')
-         * El ˙ltimo valor es una expresiÛn regular JavaScript, que siempre debe combinarse con el operador like.
-         * @return Lista de Qvariant con la representaciÛn de cada objeto JSON encontrado.
+         * El √∫ltimo valor es una expresi√≥n regular JavaScript, que siempre debe combinarse con el operador like.
+         * @return Lista de Qvariant con la representaci√≥n de cada objeto JSON encontrado.
          */
         template <class T>
         void list(const QString& design_document, const QString& list, const QString& view, const QString& where, QList<T*>& result_list)
@@ -1791,17 +1791,17 @@ namespace CouchDBManager
             qDebug() << "<" << Q_FUNC_INFO;
         }
         /**
-         * @brief list Ejecuta una funciÛn de listado de CouchDB. Se pueden establecer filtros.
-         * @param design_document Nombre del Design Document donde est· la funciÛn de listado.
-         * @param list Nombre de la funciÛn de listado.
-         * @param view Nombre de la vista sobre la que se ejecuta la funciÛn de listado.
+         * @brief list Ejecuta una funci√≥n de listado de CouchDB. Se pueden establecer filtros.
+         * @param design_document Nombre del Design Document donde est√° la funci√≥n de listado.
+         * @param list Nombre de la funci√≥n de listado.
+         * @param view Nombre de la vista sobre la que se ejecuta la funci√≥n de listado.
          * @param where QSring con una consulta PQL.
-         * PQL: Es una mezcla de SQL b·sico y JavaScript, dÛnde se pueden realizar consultas
+         * PQL: Es una mezcla de SQL b√°sico y JavaScript, d√≥nde se pueden realizar consultas
          * con los operadores de ambos lenguajes. Los valores son case-insentive.
          * Ejplo: name like 'nombre' and (descripcion != 'descripcion' or descripcion like '\s+[d|e].*')
-         * El ˙ltimo valor es una expresiÛn regular JavaScript, que siempre debe combinarse con el operador like.
-         * @param query_str Especifica una lista de par·metros, con formato QueryString.
-         * @return Lista de Qvariant con la representaciÛn de cada objeto JSON encontrado.
+         * El √∫ltimo valor es una expresi√≥n regular JavaScript, que siempre debe combinarse con el operador like.
+         * @param query_str Especifica una lista de par√°metros, con formato QueryString.
+         * @return Lista de Qvariant con la representaci√≥n de cada objeto JSON encontrado.
          */
         template <class T>
         void list(const QString& design_document, const QString& list, const QString& view, const QString& where, const QString& query_str, QList<T*>& result_list)
@@ -1860,7 +1860,7 @@ namespace CouchDBManager
 
             for (int i = 0; i < docs_array.size(); ++i)
             {
-                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG⁄N EL CORREO DE Jon Gurrutxaga del 23/11/2016
+                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG√öN EL CORREO DE Jon Gurrutxaga del 23/11/2016
                 T* entity = new T(this->parent());
 
                 entity->read(docs_array[i].toObject());
@@ -2050,9 +2050,9 @@ namespace CouchDBManager
             return went_ok;
         }
         /**
-         * @brief is_locked Verifica si la entidad est· bloqueada por el usuario actual.
+         * @brief is_locked Verifica si la entidad est√° bloqueada por el usuario actual.
          * @param entity Clase que deriva de VersionableEntity.
-         * @return true si la entidad est· bloqueada por el usuario actual.
+         * @return true si la entidad est√° bloqueada por el usuario actual.
          */
         template <class T>
         bool is_locked_by_user(T* entity)
@@ -2070,10 +2070,10 @@ namespace CouchDBManager
             return is_locked;
         }
         /**
-         * @brief is_locked Verifica si la entidad est· bloqueada por el usuario actual.
+         * @brief is_locked Verifica si la entidad est√° bloqueada por el usuario actual.
          * @param entity Clase que deriva de VersionableEntity.
          * @param locked_by Nombre de usuario para comprobar el bloqueo de la entidad.
-         * @return true si la entidad est· bloqueada por el usuario actual.
+         * @return true si la entidad est√° bloqueada por el usuario actual.
          */
         template <class T>
         bool is_locked_by_user(T* entity, const QString& locked_by)
@@ -2105,7 +2105,7 @@ namespace CouchDBManager
         }
 
         /**
-         * @brief bulk_docs Ejecuta un envÌo masivo de documentos en una sÛla transacciÛn.
+         * @brief bulk_docs Ejecuta un env√≠o masivo de documentos en una s√≥la transacci√≥n.
          * @param documents Lista de objetos que extienden QObject.
          * @return QJsonObject con la respuesta del servidor.
          */
@@ -2131,24 +2131,24 @@ namespace CouchDBManager
         void read_database_security(QStringList& admins, QStringList& users);
         /**
          * @brief update_database_security Actualiza la seguridad de una base de datos.
-         * @param admins Lista de roles que acceder·n como administradores.
-         * @param users Lista de roles que acceder·n como usuarios.
+         * @param admins Lista de roles que acceder√°n como administradores.
+         * @param users Lista de roles que acceder√°n como usuarios.
          * @return  true si se ha actualizado la base de datos.
          */
         bool update_database_security(const QStringList admins, const QStringList users);
 
         /**
          * @brief uuids Genera UUIDS desde CouchDB.
-         * @param num N˙mero de UUIDS a generar.
+         * @param num N√∫mero de UUIDS a generar.
          * @return QJsonObject con la respuesta del servidor.
          */
         QStringList uuids(int num);
 
         /**
-         * @brief login Inicia sesiÛn con un usuario de CouchDB.
+         * @brief login Inicia sesi√≥n con un usuario de CouchDB.
          * @param username Nombre de usuario.
          * @param password Clave de acceso del usuario.
-         * @return true si ha iniciado sesiÛn correctamente.
+         * @return true si ha iniciado sesi√≥n correctamente.
          */
         bool login(const QString& username, const QString& password, QStringList& roles);
         /**
@@ -2157,13 +2157,13 @@ namespace CouchDBManager
          */
         CouchDBManager::UserContext* user_context();
         /**
-         * @brief logout Cierra la sesiÛn del usuario de CouchDB.
-         * @return true si ha cerrado sesiÛn correctamente.
+         * @brief logout Cierra la sesi√≥n del usuario de CouchDB.
+         * @return true si ha cerrado sesi√≥n correctamente.
          */
         bool logout();
         /**
          * @brief read_user Recupera un objeto usuario de CouchDB.
-         * @param id Identificador ˙nico de usuario.
+         * @param id Identificador √∫nico de usuario.
          * @param user Instancia de un objeto derivado de BaseEntity.
          */
         template <class T>
@@ -2359,7 +2359,7 @@ namespace CouchDBManager
             return result_json.contains("ok") && result_json["ok"].toBool();
         }
 
-        /** Ejecuta una funciÛn de listado de usuarios de CouchDB. Se pueden establecer filtros.
+        /** Ejecuta una funci√≥n de listado de usuarios de CouchDB. Se pueden establecer filtros.
          * @param design_document Nombre del Design Document donde est? la funci?n de listado.
          * @param list Nombre de la funci?n de listado.
          * @param view Nombre de la vista sobre la que se ejecuta la funci?n de listado.
@@ -2416,13 +2416,13 @@ namespace CouchDBManager
             for (int i = 0; i < docs_array.size(); ++i)
             {
                 QJsonObject json = docs_array[i].toObject();
-                //TODO: ø? descartar usuarios de tipo _admin
+                //TODO: ¬ø? descartar usuarios de tipo _admin
                 if (json.contains("password"))
                 {
                     json.remove("password");
                 }
 
-                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG⁄N EL CORREO DE Jon Gurrutxaga del 23/11/2016
+                // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEG√öN EL CORREO DE Jon Gurrutxaga del 23/11/2016
                 T* entity = new T(this->parent());
                 entity->read(json["doc"].toObject());
                 result_list.append(entity);
@@ -2432,32 +2432,32 @@ namespace CouchDBManager
         }
 
         /**
-         * @brief replicate Inicia una replicaciÛn seg˙n la configuraciÛn proporcionada.
-         * @param repl_config ConfiguraciÛn de la replicaciÛn.
-         * @return true si la replicaciÛn ha funcionado correctamente.
+         * @brief replicate Inicia una replicaci√≥n seg√∫n la configuraci√≥n proporcionada.
+         * @param repl_config Configuraci√≥n de la replicaci√≥n.
+         * @return true si la replicaci√≥n ha funcionado correctamente.
          */
         bool replicate(CouchDBManager::ReplicationConfig* repl_config);
         /**
-         * @brief add_replication_service AÒade un servicio de replicaciÛn, seg˙n la configuraciÛn proporcionada.
-         * @param repl_config ConfiguraciÛn de la replicaciÛn.
-         * @return true si se ha aÒadido el servicio correctamente.
+         * @brief add_replication_service A√±ade un servicio de replicaci√≥n, seg√∫n la configuraci√≥n proporcionada.
+         * @param repl_config Configuraci√≥n de la replicaci√≥n.
+         * @return true si se ha a√±adido el servicio correctamente.
          */
         bool add_replication_service(CouchDBManager::ReplicationConfig* repl_config);
         /**
-         * @brief read_replication_service lee un servicio de replicaciÛn.
-         * @param repl_config ConfiguraciÛn de la replicaciÛn.
-         * @return ConfiguraciÛn del servicio de replicaciÛn.
+         * @brief read_replication_service lee un servicio de replicaci√≥n.
+         * @param repl_config Configuraci√≥n de la replicaci√≥n.
+         * @return Configuraci√≥n del servicio de replicaci√≥n.
          */
         CouchDBManager::ReplicationConfig* read_replication_service(const QString& id);
         /**
-         * @brief update_replication_service actualiza un servicio de replicaciÛn, seg˙n la configuraciÛn proporcionada.
-         * @param repl_config ConfiguraciÛn de la replicaciÛn.
+         * @brief update_replication_service actualiza un servicio de replicaci√≥n, seg√∫n la configuraci√≥n proporcionada.
+         * @param repl_config Configuraci√≥n de la replicaci√≥n.
          * @return true si se ha actualizado el servicio correctamente.
          */
         bool update_replication_service(CouchDBManager::ReplicationConfig* repl_config);
         /**
-         * @brief remove_replication_service Elimina un servicio de replicaciÛn.
-         * @param id IdentificaciÛn del servicio de replicaciÛn.
+         * @brief remove_replication_service Elimina un servicio de replicaci√≥n.
+         * @param id Identificaci√≥n del servicio de replicaci√≥n.
          * @return true si se ha eliminado el servicio correctamente.
          */
         bool remove_replication_service(const QString& id);
@@ -2506,15 +2506,15 @@ namespace CouchDBManager
          */
         static QDateTime toDateTime(const QString& date_string, const QString& format);
         /**
-         * @brief toDateString Obtiene un QString con la representaciÛn de la fecha de un timestamp.
+         * @brief toDateString Obtiene un QString con la representaci√≥n de la fecha de un timestamp.
          * @param timestamp Timestamp con formato unix.
-         * @return QString con la representaciÛn de la fecha.
+         * @return QString con la representaci√≥n de la fecha.
          */
         static QString toDateString(qint64 timestamp);
         /**
-         * @brief toDateString Obtiene un QString con la representaciÛn de la fecha de un objeto QDateTime.
+         * @brief toDateString Obtiene un QString con la representaci√≥n de la fecha de un objeto QDateTime.
          * @param datetime Objeto QDateTime.
-         * @return QString con la representaciÛn de la fecha.
+         * @return QString con la representaci√≥n de la fecha.
          */
         static QString toDateString(const QDateTime& datetime);
         /**
@@ -2528,24 +2528,24 @@ namespace CouchDBManager
          */
         static QDateTime todayDateTime();
         /**
-         * @brief today Obtiene un QString con la representaciÛn de la fecha/hora actual.
-         * @return QString con la representaciÛn de la fecha/hora actual.
+         * @brief today Obtiene un QString con la representaci√≥n de la fecha/hora actual.
+         * @return QString con la representaci√≥n de la fecha/hora actual.
          */
         static QString todayDateString();
         /**
-         * @brief formatDate Obtiene un QString con la representaciÛn de la fecha/hora del QDateTime,
+         * @brief formatDate Obtiene un QString con la representaci√≥n de la fecha/hora del QDateTime,
          * en el formato especificado en el QString.
          * @param datetime Objeto QDateTime.
          * @param format QString con el formato.
-         * @return QString con la fecha formateada seg˙n el esquema proporcionado.
+         * @return QString con la fecha formateada seg√∫n el esquema proporcionado.
          */
         static QString formatDate(const QDateTime& datetime, const QString& format);
         /**
-         * @brief formatDate Obtiene un QString con la representaciÛn de la fecha/hora del timestamp,
+         * @brief formatDate Obtiene un QString con la representaci√≥n de la fecha/hora del timestamp,
          * en el formato especificado en el QString.
          * @param timestamp qin64 con el timestamp.
          * @param format QString con el formato.
-         * @return QString con la fecha formateada seg˙n el esquema proporcionado.
+         * @return QString con la fecha formateada seg√∫n el esquema proporcionado.
          */
         static QString formatDate(qint64 timestamp, const QString& format);
 
