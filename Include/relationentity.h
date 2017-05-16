@@ -49,6 +49,9 @@ namespace CouchDBManager
         Q_OBJECT
         Q_PROPERTY(bool is_virtual READ get_is_virtual WRITE set_is_virtual)
 
+    protected:
+        bool is_virtual;
+        
     public:
         /**
           * @brief RelationEntity Constructor por defecto.
