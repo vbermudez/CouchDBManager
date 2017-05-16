@@ -33,3 +33,14 @@ bool CouchDBManager::RelationEntity::is_relation_entity(QObject *object) const
 
     return is_re;
 }
+
+bool CouchDBManager::RelationEntity::get_is_virtual()
+{
+    return is_virtual;
+}
+
+void CouchDBManager::RelationEntity::set_is_virtual(bool _virtual)
+{
+    is_virtual = _virtual;
+}
+
