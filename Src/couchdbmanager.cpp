@@ -1450,41 +1450,11 @@ bool CouchDBManager::DBManager::replicate(CouchDBManager::ReplicationConfig *rep
         return false;
     }
 
-    job_ended = json_object.contains("ok") && json_object["ok"].toBool();
-
-    while(!job_ended)
-    {
-        QList<CouchDBManager::ActiveTask*> tasks = this->list_active_tasks();
-
-        if (tasks.empty())
-        {
-            job_ended = true;
-        }
-        else
-        {
-            job_ended = true;
-
-            foreach(CouchDBManager::ActiveTask* task, tasks)
-            {
-                if (task->get_type() == "replication" &&
-                        task->get_source() == repl_config->get_source()->get_url() &&
-                        task->get_target() == repl_config->get_target()->get_url()) {
-                    job_ended = false;
-                }
-            }
-
-            if (!job_ended)
-            {
-                CouchDBManager::Sleeper::sleep(1);
-            }
-        }
-    }
-
     this->set_timeout(orig_timeout);
 
     qDebug() << "<" << Q_FUNC_INFO;
 
-    return job_ended;
+    return json_object.contains("ok") && json_object["ok"].toBool();
 }
 
 bool CouchDBManager::DBManager::add_replication_service(CouchDBManager::ReplicationConfig *repl_config)
