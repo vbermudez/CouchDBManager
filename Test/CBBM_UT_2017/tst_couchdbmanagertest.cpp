@@ -44,6 +44,7 @@ private Q_SLOTS:
     void unlockVersionableEntity();
     void lockAndUpdateVersionableEntity();
     void lockAndUpgradeVersionableEntity();
+    void tryDowngradeVersionableEntity();
     void lockAndUpdateVersionableEntityAgain();
     void lockVersionableEntityUsingDifferentUser();
     void tryToLockVersionableEntityUsingDifferentUser();
@@ -64,11 +65,12 @@ private Q_SLOTS:
 
 CouchDBManagerTest::CouchDBManagerTest()
 {
-    exec.insert("CouchDBManagerTest::createVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::createVersionableEntity", true);
     exec.insert("CouchDBManagerTest::lockVersionableEntity", false);
     exec.insert("CouchDBManagerTest::unlockVersionableEntity", false);
-    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", false);
-    exec.insert("CouchDBManagerTest::lockAndUpgradeVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", true);
+    exec.insert("CouchDBManagerTest::lockAndUpgradeVersionableEntity", true);
+    exec.insert("CouchDBManagerTest::tryDowngradeVersionableEntity", true);
     exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntityAgain", false);
     exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", false);
     exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingDifferentUser", false);
@@ -256,6 +258,33 @@ void CouchDBManagerTest::lockAndUpgradeVersionableEntity()
     car.set_version(2);
     db->update<Car>(&car, true);
 
+}
+
+void CouchDBManagerTest::tryDowngradeVersionableEntity()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My new version car", "Incorrect name");
+
+    bool locked = db->lock<Car>(&car);
+
+    QVERIFY2(locked, "Entity not locked");
+
+    car.set_name("My downgraded version car");
+    car.set_version(1);
+    CouchDBManager::DBManagerResponse* resp = db->update<Car>(&car, true);
+
+    QVERIFY2(!resp->get_went_ok(), "Downgrade permitted!");
+    qDebug() << resp->get_response();
 }
 
 void CouchDBManagerTest::lockAndUpdateVersionableEntityAgain()

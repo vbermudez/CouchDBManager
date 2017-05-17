@@ -1499,7 +1499,21 @@ namespace CouchDBManager
                     QMetaObject::invokeMethod(&persisted, "get_version", Q_RETURN_ARG(int, persisted_version));
                     QMetaObject::invokeMethod(entity, "get_version", Q_RETURN_ARG(int, entity_version));
 
-                    if (locked_by_user && persisted_version != entity_version)
+                    if (persisted_version > entity_version)
+                    {
+                        QString err = QString(Q_FUNC_INFO) + " FATAL The new entity version is lower than the persisted one.";
+
+                        this->set_error_string(err);
+
+                        qCritical() << err;
+                        qDebug() << "<" << Q_FUNC_INFO;
+                        response->set_went_ok(false);
+                        response->set_response(err);
+
+                        return response;
+                    }
+
+                    if (locked_by_user && persisted_version < entity_version)
                     {
                         persisted.set_id( QString(persisted.get_id() + "::%1").arg(persisted_version) );
                         persisted.set_rev("");
