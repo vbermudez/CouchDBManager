@@ -43,6 +43,8 @@ private Q_SLOTS:
     void lockVersionableEntity();
     void unlockVersionableEntity();
     void lockAndUpdateVersionableEntity();
+    void lockAndUpgradeVersionableEntity();
+    void lockAndUpdateVersionableEntityAgain();
     void lockVersionableEntityUsingDifferentUser();
     void tryToLockVersionableEntityUsingDifferentUser();
     void tryToLockVersionableEntityUsingAnotherUser();
@@ -51,24 +53,28 @@ private Q_SLOTS:
     void tryToLUnlockVersionableEntityUsingDifferentUser();
     void deleteVersionableEntity();
     void tryToDeleteVersionableEntityUsingDifferentUser();
+    void replicateOnce();
 
     void cleanupTestCase();
 };
 
 CouchDBManagerTest::CouchDBManagerTest()
 {
-    exec.insert("CouchDBManagerTest::createVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::lockVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::unlockVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", true);
-    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingDifferentUser", true);
-    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser", true);
-    exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser", true);
-    exec.insert("CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser", true);
-    exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingDifferentUser", true);
-    exec.insert("CouchDBManagerTest::deleteVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::tryToDeleteVersionableEntityUsingDifferentUser", true);
+    exec.insert("CouchDBManagerTest::createVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::lockVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::unlockVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::lockAndUpgradeVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntityAgain", false);
+    exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingAnotherUser", false);
+    exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingAnotherUser", false);
+    exec.insert("CouchDBManagerTest::unlockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::deleteVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::tryToDeleteVersionableEntityUsingDifferentUser", false);
+    exec.insert("CouchDBManagerTest::replicateOnce", true);
 
     db = new CouchDBManager::DBManager(this);
 
@@ -119,7 +125,7 @@ void CouchDBManagerTest::createVersionableEntity()
 
     car.set_name("My Car");
     car.set_description("My Own Car");
-    car.set_version(12);
+    car.set_version(1);
 
     CouchDBManager::DBManagerResponse* response = db->create<Car>(&car);
 
@@ -211,6 +217,64 @@ void CouchDBManagerTest::lockAndUpdateVersionableEntity()
     QVERIFY2(car.get_locked_by() == usr, "Incorrect user");
 
     car.set_name("My unlocked car");
+
+    CouchDBManager::DBManagerResponse* resp = db->update<Car>(&car, true);
+
+    QVERIFY2(resp->get_went_ok(), "Entity not updated");
+    QVERIFY2(car.get_locked_by().isEmpty(), "User not empty");
+    QVERIFY2(!car.get_locked(), "Entity not unlocked");
+}
+
+void CouchDBManagerTest::lockAndUpgradeVersionableEntity()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My unlocked car", "Incorrect name");
+
+    bool locked = db->lock<Car>(&car);
+
+    QVERIFY2(locked, "Entity not locked");
+
+    car.set_name("My new version car");
+    car.set_version(2);
+    db->update<Car>(&car, true);
+
+}
+
+void CouchDBManagerTest::lockAndUpdateVersionableEntityAgain()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    Car car;
+
+    db->read<Car>(last_id, QString(), &car);
+
+    QVERIFY2(!car.get_id().isNull(), "_id is null");
+    QVERIFY2(!car.get_id().isEmpty(), "_id is empty");
+    QVERIFY2(!car.get_rev().isNull(), "_rev is null");
+    QVERIFY2(!car.get_rev().isEmpty(), "_rev is empty");
+    QVERIFY2(car.get_collection() == "car", "Incorrect collection");
+    QVERIFY2(car.get_name() == "My new version car", "Incorrect name");
+
+    bool locked = db->lock<Car>(&car);
+
+    QVERIFY2(locked, "Entity not locked");
+
+    CouchDBManager::UserContext* uc = db->user_context();
+    QString usr = uc->get_userCtx().name;
+
+    QVERIFY2(car.get_locked_by() == usr, "Incorrect user");
+
+    car.set_name("My new version car updated");
 
     CouchDBManager::DBManagerResponse* resp = db->update<Car>(&car, true);
 
@@ -425,6 +489,24 @@ void CouchDBManagerTest::tryToDeleteVersionableEntityUsingDifferentUser()
     CouchDBManager::DBManagerResponse* resp = db->delete_doc<Car>(&car);
 
     QVERIFY2(!resp->get_went_ok(), "Entity deleted");
+}
+
+void CouchDBManagerTest::replicateOnce()
+{
+    CouchDBManager::ReplicationConfig cfg;
+    CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
+    CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
+
+    source->set_url("repl_test");
+    target->set_url("http://172.24.2.222:5984/repl_test_dest");
+    target->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
+    cfg.set_source(source);
+    cfg.set_target(target);
+    cfg.set_create_target(true);
+
+    bool replicated = db->replicate(&cfg);
+
+    QVERIFY2(replicated, "Replication failed");
 }
 
 void CouchDBManagerTest::cleanupTestCase()

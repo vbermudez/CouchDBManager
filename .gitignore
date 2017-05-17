@@ -6,3 +6,4 @@ Make/**
 !Make/CouchDBManager.pro
 CVS
 **/CVS
+**/*.autosave

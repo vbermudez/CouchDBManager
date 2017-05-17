@@ -1409,6 +1409,12 @@ bool CouchDBManager::DBManager::replicate(CouchDBManager::ReplicationConfig *rep
         return false;
     }
 
+    bool job_ended = false;
+    qint64 orig_timeout = this->get_timeout();
+    qint64 max_timeout = std::numeric_limits<qint64>::max();
+
+    this->set_timeout(max_timeout);
+
     QString repl_cfg_str = this->json_object_2_string(repl_cfg_json);
     QString result = this->do_post(repl_cfg_str, "_replicate", false);
 
@@ -1444,9 +1450,41 @@ bool CouchDBManager::DBManager::replicate(CouchDBManager::ReplicationConfig *rep
         return false;
     }
 
+    job_ended = json_object.contains("ok") && json_object["ok"].toBool();
+
+    while(!job_ended)
+    {
+        QList<CouchDBManager::ActiveTask*> tasks = this->list_active_tasks();
+
+        if (tasks.empty())
+        {
+            job_ended = true;
+        }
+        else
+        {
+            job_ended = true;
+
+            foreach(CouchDBManager::ActiveTask* task, tasks)
+            {
+                if (task->get_type() == "replication" &&
+                        task->get_source() == repl_config->get_source()->get_url() &&
+                        task->get_target() == repl_config->get_target()->get_url()) {
+                    job_ended = false;
+                }
+            }
+
+            if (!job_ended)
+            {
+                CouchDBManager::Sleeper::sleep(1);
+            }
+        }
+    }
+
+    this->set_timeout(orig_timeout);
+
     qDebug() << "<" << Q_FUNC_INFO;
 
-    return json_object.contains("ok") && json_object["ok"].toBool();
+    return job_ended;
 }
 
 bool CouchDBManager::DBManager::add_replication_service(CouchDBManager::ReplicationConfig *repl_config)

@@ -135,6 +135,7 @@
 #include <QSignalMapper>
 #include <QHostInfo>
 #include <QHostAddress>
+#include <QThread>
 
 #include <exception>
 #include <limits>
@@ -160,6 +161,19 @@
  */
 namespace CouchDBManager
 {
+    /**
+     * @brief La clase Sleeper es únicamente una utilidad para detener X tiempo la ejecución de una hebra.
+     * @author vbermudez@xi-tek.com
+     * @date 17/05/2017
+     */
+    class COUCHDBMANAGERSHARED_EXPORT Sleeper : public QThread
+    {
+    public:
+        static void usleep(unsigned long usecs){QThread::usleep(usecs);}
+        static void msleep(unsigned long msecs){QThread::msleep(msecs);}
+        static void sleep(unsigned long secs){QThread::sleep(secs);}
+    };
+
     /**
      * @brief La clase DBManager extiende a QObject para garantizar la completa intregración en el framework QT.
      * Gestiona las distintas operaciones básicas de CouchDB tales como leer, crear, modificar y borrar documentos.
