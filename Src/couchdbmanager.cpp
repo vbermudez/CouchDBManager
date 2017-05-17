@@ -1409,7 +1409,6 @@ bool CouchDBManager::DBManager::replicate(CouchDBManager::ReplicationConfig *rep
         return false;
     }
 
-    bool job_ended = false;
     qint64 orig_timeout = this->get_timeout();
     qint64 max_timeout = std::numeric_limits<qint64>::max();
 
@@ -1626,6 +1625,62 @@ QList<CouchDBManager::ActiveTask*> CouchDBManager::DBManager::list_active_tasks(
 
         task->read(item);
         list.append(task);
+    }
+
+    qDebug() << "<" << Q_FUNC_INFO;
+
+    return list;
+}
+
+QList<CouchDBManager::ReplicationConfig*> CouchDBManager::DBManager::list_active_replications()
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+
+    QList<CouchDBManager::ReplicationConfig*> list;
+    QString result = this->do_get("_active_tasks", QString(), false);
+
+    QJsonParseError json_parse_error;
+    QJsonArray json_array = this->string_2_json_array(result, &json_parse_error);
+
+    if (json_parse_error.error != QJsonParseError::NoError)
+    {
+        QString err = QString(Q_FUNC_INFO) + " FATAL " + json_parse_error.errorString();
+
+        this->set_error_string(err);
+        qCritical() << err;
+
+        qDebug() << "<" << Q_FUNC_INFO;
+
+        return list;
+    }
+
+    foreach (QJsonValue value, json_array)
+    {
+        QJsonObject item = value.toObject();
+
+        if (item["type"] == "replication")
+        {
+            CouchDBManager::ReplicationConfig* cfg = new CouchDBManager::ReplicationConfig(this);
+            CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(cfg);
+            CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(cfg);
+
+            source->set_url(item["source"].toString());
+            target->set_url(item["target"].toString());
+            cfg->set_source(source);
+            cfg->set_target(target);
+            cfg->set_continuous(item["continuous"].toBool());
+            cfg->set_checkpoint_seq(item["checkpointed_source_seq"].toInt());
+            cfg->set_source_seq(item["source_seq"].toInt());
+            cfg->set_progress(item["progress"].toInt());
+
+            if (item.contains("doc_id") && !item["doc_id"].isNull() &&
+                    !item["doc_id"].isUndefined() && !item["doc_id"].toString().isEmpty())
+            {
+                cfg->set_id(item["doc_id"].toString());
+            }
+
+            list.append(cfg);
+        }
     }
 
     qDebug() << "<" << Q_FUNC_INFO;

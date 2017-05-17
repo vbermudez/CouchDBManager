@@ -54,6 +54,10 @@ private Q_SLOTS:
     void deleteVersionableEntity();
     void tryToDeleteVersionableEntityUsingDifferentUser();
     void replicateOnce();
+    void addReplicationService();
+    void addFilteredReplicationService();
+    void listTasks();
+    void listReplications();
 
     void cleanupTestCase();
 };
@@ -74,7 +78,11 @@ CouchDBManagerTest::CouchDBManagerTest()
     exec.insert("CouchDBManagerTest::tryToLUnlockVersionableEntityUsingDifferentUser", false);
     exec.insert("CouchDBManagerTest::deleteVersionableEntity", false);
     exec.insert("CouchDBManagerTest::tryToDeleteVersionableEntityUsingDifferentUser", false);
-    exec.insert("CouchDBManagerTest::replicateOnce", true);
+    exec.insert("CouchDBManagerTest::replicateOnce", false);
+    exec.insert("CouchDBManagerTest::addReplicationService", false);
+    exec.insert("CouchDBManagerTest::addFilteredReplicationService", false);
+    exec.insert("CouchDBManagerTest::listTasks", true);
+    exec.insert("CouchDBManagerTest::listReplications", true);
 
     db = new CouchDBManager::DBManager(this);
 
@@ -493,6 +501,8 @@ void CouchDBManagerTest::tryToDeleteVersionableEntityUsingDifferentUser()
 
 void CouchDBManagerTest::replicateOnce()
 {
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
     CouchDBManager::ReplicationConfig cfg;
     CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
     CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
@@ -507,6 +517,83 @@ void CouchDBManagerTest::replicateOnce()
     bool replicated = db->replicate(&cfg);
 
     QVERIFY2(replicated, "Replication failed");
+
+    CouchDBManager::DBManager* remote = new CouchDBManager::DBManager(this);
+    QStringList roles;
+
+    remote->set_server_address("http://172.24.2.222:5984");
+    remote->set_database_name("repl_test_dest");
+    remote->login("root", "root", roles);
+    remote->delete_database("repl_test_dest");
+    remote->logout();
+
+    delete remote;
+}
+
+void CouchDBManagerTest::addReplicationService()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    CouchDBManager::ReplicationConfig cfg;
+    CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
+    CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
+
+    source->set_url("http://localhost:5984/aunia_data");
+    source->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
+    target->set_url("http://172.24.2.222:5984/repl_test_dest");
+    target->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
+    cfg.set_source(source);
+    cfg.set_target(target);
+    cfg.set_create_target(true);
+    cfg.set_continuous(true);
+
+    bool added = db->add_replication_service(&cfg);
+
+    QVERIFY2(added, "Replication service not added");
+}
+
+void CouchDBManagerTest::addFilteredReplicationService()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    CouchDBManager::ReplicationConfig cfg;
+    CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
+    CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
+    QMap<QString, QVariant> params;
+
+    source->set_url("http://localhost:5984/aunia_data");
+    source->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
+    target->set_url("http://localhost:5984/repl_test_dest_cars_only");
+    target->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
+    cfg.set_source(source);
+    cfg.set_target(target);
+    cfg.set_create_target(true);
+    cfg.set_continuous(true);
+    cfg.set_filter("commons/by_query");
+    params.insert("where", "collection='car'");
+    cfg.set_query_params(params);
+
+    bool added = db->add_replication_service(&cfg);
+
+    QVERIFY2(added, "Replication service not added");
+}
+
+void CouchDBManagerTest::listTasks()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    QList<CouchDBManager::ActiveTask*> tasks = db->list_active_tasks();
+
+    QVERIFY2(!tasks.isEmpty(), "Empty task list");
+}
+
+void CouchDBManagerTest::listReplications()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    QList<CouchDBManager::ReplicationConfig*> repls = db->list_active_replications();
+
+    QVERIFY2(!repls.isEmpty(), "Empty replications list");
 }
 
 void CouchDBManagerTest::cleanupTestCase()

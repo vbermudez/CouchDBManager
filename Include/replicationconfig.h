@@ -101,6 +101,9 @@ namespace CouchDBManager
         Q_PROPERTY(QStringList doc_ids READ get_doc_ids WRITE set_doc_ids)
         Q_PROPERTY(QString filter READ get_filter WRITE set_filter)
         Q_PROPERTY(QString proxy READ get_proxy WRITE set_proxy)
+        Q_PROPERTY(qint64 checkpoint_seq READ get_checkpoint_seq WRITE set_checkpoint_seq)
+        Q_PROPERTY(qint64 source_seq READ get_source_seq WRITE set_source_seq)
+        Q_PROPERTY(int progress READ get_progress WRITE set_progress)
         Q_PROPERTY(QMap query_params READ get_query_params WRITE set_query_params)
         Q_PROPERTY(QString error_string READ get_error_string WRITE set_error_string)
 
@@ -114,6 +117,9 @@ namespace CouchDBManager
             this->cancel = false;
             this->create_target = false;
             this->collection = "custom-replication";
+            this->checkpoint_seq = 0;
+            this->source_seq = 0;
+            this->progress = 0;
         }
         /**
          * @brief ReplicationConfig Constructor de copia. No utilizar.
@@ -128,6 +134,9 @@ namespace CouchDBManager
             this->doc_ids = a_replication_cfg.doc_ids;
             this->filter = a_replication_cfg.filter;
             this->proxy = a_replication_cfg.proxy;
+            this->checkpoint_seq = a_replication_cfg.checkpoint_seq;
+            this->source_seq = a_replication_cfg.source_seq;
+            this->progress = a_replication_cfg.progress;
             this->query_params = a_replication_cfg.query_params;
             this->error_string = a_replication_cfg.error_string;
         }
@@ -151,6 +160,9 @@ namespace CouchDBManager
         QStringList doc_ids;
         QString filter;
         QString proxy;
+        qint64 checkpoint_seq;
+        qint64 source_seq;
+        int progress;
         QMap<QString, QVariant> query_params;
         QString error_string;
 
@@ -240,6 +252,36 @@ namespace CouchDBManager
          * @param a_proxy El valor para la propiedad proxy.
          */
         void set_proxy(const QString& a_proxy) { this->proxy = a_proxy; }
+        /**
+         * @brief get_checkpoint_seq Recupera de la propiedad checkpoint_seq.
+         * @return El valor de la propiedad.
+         */
+        qint64 get_checkpoint_seq() const { return this->checkpoint_seq; }
+        /**
+         * @brief set_checkpoint_seq Establece el valor a la propiedad checkpoint_seq.
+         * @param a_checkpoint_seq El valor para la propiedad checkpoint_seq.
+         */
+        void set_checkpoint_seq(qint64 a_checkpoint_seq) { this->checkpoint_seq = a_checkpoint_seq; }
+        /**
+         * @brief get_source_seq Recupera de la propiedad source_seq.
+         * @return El valor de la propiedad.
+         */
+        qint64 get_source_seq() const { return this->source_seq; }
+        /**
+         * @brief set_source_seq Establece el valor a la propiedad source_seq.
+         * @param a_source_seql valor para la propiedad source_seq.
+         */
+        void set_source_seq(qint64 a_source_seq) { this->source_seq = a_source_seq; }
+        /**
+         * @brief get_progress Recupera de la propiedad progress.
+         * @return El valor de la propiedad.
+         */
+        int get_progress() const { return this->progress; }
+        /**
+         * @brief set_progress Establece el valor a la propiedad progress.
+         * @param a_progress El valor para la propiedad progress.
+         */
+        void set_progress(int a_progress) { this->progress = a_progress; }
         /**
          * @brief get_query_params Recupera de la propiedad query_params.
          * @return El valor de la propiedad.

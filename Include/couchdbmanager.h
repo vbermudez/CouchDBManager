@@ -2480,6 +2480,11 @@ namespace CouchDBManager
          * @return QList de ActiveTask.
          */
         QList<CouchDBManager::ActiveTask*> list_active_tasks();
+        /**
+         * @brief list_active_replications Lista las replicaciones activas en CouchDB.
+         * @return QList de ReplicationConfig.
+         */
+        QList<CouchDBManager::ReplicationConfig*> list_active_replications();
 
         /**
          * @brief toUnixTimeStamp Obtiene un timestamp a partir de un objeto QDateTime.
