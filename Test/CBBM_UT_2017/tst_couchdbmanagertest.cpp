@@ -29,6 +29,7 @@ private:
     QString last_id;
     QString last_rev;
     QMap<QString, bool> exec;
+    bool recreate_db;
 
     void sleep(int ms);
     bool skip(const QString& name);
@@ -84,9 +85,11 @@ CouchDBManagerTest::CouchDBManagerTest()
     exec.insert("CouchDBManagerTest::tryToDeleteVersionableEntityUsingDifferentUser", false);
     exec.insert("CouchDBManagerTest::replicateOnce", false);
     exec.insert("CouchDBManagerTest::addReplicationService", false);
-    exec.insert("CouchDBManagerTest::addFilteredReplicationService", false);
+    exec.insert("CouchDBManagerTest::addFilteredReplicationService", true);
     exec.insert("CouchDBManagerTest::listTasks", false);
-    exec.insert("CouchDBManagerTest::listReplications", false);
+    exec.insert("CouchDBManagerTest::listReplications", true);
+
+    recreate_db = false;
 
     db = new CouchDBManager::DBManager(this);
 
@@ -133,27 +136,37 @@ void CouchDBManagerTest::createUnitTestDB()
 {
     if (skip(NAME)) QSKIP("Prueba no necesaria");
 
-    db->delete_database("dbmanager_unittest");
+    if (this->recreate_db)
+    {
+        db->delete_database("dbmanager_unittest");
+    }
 
-    CouchDBManager::ReplicationConfig cfg;
-    CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
-    CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
+    QStringList db_list = db->list_databases();
 
-    source->set_url("aunia_data");
-    target->set_url("dbmanager_unittest");
-    cfg.set_source(source);
-    cfg.set_target(target);
-    cfg.set_create_target(true);
+    QVERIFY2(!db_list.isEmpty(), "There are no DDBB!");
 
-    bool replicated = db->replicate(&cfg);
+    if (!db_list.contains("dbmanager_unittest"))
+    {
+        CouchDBManager::ReplicationConfig cfg;
+        CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
+        CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
 
-    QVERIFY2(replicated, "Replication failed");
+        source->set_url("aunia_data");
+        target->set_url("dbmanager_unittest");
+        cfg.set_source(source);
+        cfg.set_target(target);
+        cfg.set_create_target(true);
 
-    source->set_url("aunia");
-    cfg.set_create_target(false);
-    replicated = db->replicate(&cfg);
+        bool replicated = db->replicate(&cfg);
 
-    QVERIFY2(replicated, "Replication failed");
+        QVERIFY2(replicated, "Replication failed");
+
+        source->set_url("aunia");
+        cfg.set_create_target(false);
+        replicated = db->replicate(&cfg);
+
+        QVERIFY2(replicated, "Replication failed");
+    }
 }
 
 void CouchDBManagerTest::createVersionableEntity()

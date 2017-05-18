@@ -2499,6 +2499,11 @@ namespace CouchDBManager
          * @return QList de ReplicationConfig.
          */
         QList<CouchDBManager::ReplicationConfig*> list_active_replications();
+        /**
+         * @brief list_databases Lista las bases de datos en el servidor CouchDB.
+         * @return QStringList con los nombres de las BBDD.
+         */
+        QStringList list_databases();
 
         /**
          * @brief toUnixTimeStamp Obtiene un timestamp a partir de un objeto QDateTime.

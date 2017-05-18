@@ -1688,6 +1688,53 @@ QList<CouchDBManager::ReplicationConfig*> CouchDBManager::DBManager::list_active
     return list;
 }
 
+QStringList CouchDBManager::DBManager::list_databases()
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+
+    QString read_result = this->do_get("_all_dbs", QString(), false);
+
+    if (read_result.isEmpty() || read_result.isNull())
+    {
+        if (this->get_error_string().isEmpty() || this->get_error_string().isNull())
+        {
+            QString err = QString(Q_FUNC_INFO) + " FATAL Unknown error: Response is empty";
+
+            this->set_error_string(err);
+            qCritical() << err;
+        }
+
+        qDebug() << "<" << Q_FUNC_INFO;
+
+        return QStringList();
+    }
+
+    QJsonParseError json_parse_error;
+    QJsonArray json_array = this->string_2_json_array(read_result, &json_parse_error);
+
+    if (json_parse_error.error != QJsonParseError::NoError)
+    {
+        QString err = QString(Q_FUNC_INFO) + " FATAL " + json_parse_error.errorString();
+
+        this->set_error_string(err);
+        qCritical() << err;
+        qDebug() << "<" << Q_FUNC_INFO;
+
+        return QStringList();
+    }
+
+    QStringList result;
+
+    foreach (QJsonValue value, json_array)
+    {
+        result.append(value.toString());
+    }
+
+    qDebug() << "<" << Q_FUNC_INFO;
+
+    return result;
+}
+
 bool CouchDBManager::DBManager::remove_replication_service(const QString &id)
 {
     qDebug() << ">" << Q_FUNC_INFO;
