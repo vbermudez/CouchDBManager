@@ -39,6 +39,7 @@ public:
 private Q_SLOTS:
     void initTestCase();
 
+    void createUnitTestDB();
     void createVersionableEntity();
     void lockVersionableEntity();
     void unlockVersionableEntity();
@@ -65,12 +66,13 @@ private Q_SLOTS:
 
 CouchDBManagerTest::CouchDBManagerTest()
 {
-    exec.insert("CouchDBManagerTest::createVersionableEntity", true);
+    exec.insert("CouchDBManagerTest::createUnitTestDB", true);
+    exec.insert("CouchDBManagerTest::createVersionableEntity", false);
     exec.insert("CouchDBManagerTest::lockVersionableEntity", false);
     exec.insert("CouchDBManagerTest::unlockVersionableEntity", false);
-    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::lockAndUpgradeVersionableEntity", true);
-    exec.insert("CouchDBManagerTest::tryDowngradeVersionableEntity", true);
+    exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::lockAndUpgradeVersionableEntity", false);
+    exec.insert("CouchDBManagerTest::tryDowngradeVersionableEntity", false);
     exec.insert("CouchDBManagerTest::lockAndUpdateVersionableEntityAgain", false);
     exec.insert("CouchDBManagerTest::lockVersionableEntityUsingDifferentUser", false);
     exec.insert("CouchDBManagerTest::tryToLockVersionableEntityUsingDifferentUser", false);
@@ -83,8 +85,8 @@ CouchDBManagerTest::CouchDBManagerTest()
     exec.insert("CouchDBManagerTest::replicateOnce", false);
     exec.insert("CouchDBManagerTest::addReplicationService", false);
     exec.insert("CouchDBManagerTest::addFilteredReplicationService", false);
-    exec.insert("CouchDBManagerTest::listTasks", true);
-    exec.insert("CouchDBManagerTest::listReplications", true);
+    exec.insert("CouchDBManagerTest::listTasks", false);
+    exec.insert("CouchDBManagerTest::listReplications", false);
 
     db = new CouchDBManager::DBManager(this);
 
@@ -125,6 +127,33 @@ void CouchDBManagerTest::initTestCase()
 
     QVERIFY2(logged_in, "Not logged in");
     QVERIFY2(roles.size() > 0, "Root has no roles");
+}
+
+void CouchDBManagerTest::createUnitTestDB()
+{
+    if (skip(NAME)) QSKIP("Prueba no necesaria");
+
+    db->delete_database("dbmanager_unittest");
+
+    CouchDBManager::ReplicationConfig cfg;
+    CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
+    CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
+
+    source->set_url("aunia_data");
+    target->set_url("dbmanager_unittest");
+    cfg.set_source(source);
+    cfg.set_target(target);
+    cfg.set_create_target(true);
+
+    bool replicated = db->replicate(&cfg);
+
+    QVERIFY2(replicated, "Replication failed");
+
+    source->set_url("aunia");
+    cfg.set_create_target(false);
+    replicated = db->replicate(&cfg);
+
+    QVERIFY2(replicated, "Replication failed");
 }
 
 void CouchDBManagerTest::createVersionableEntity()
@@ -536,8 +565,8 @@ void CouchDBManagerTest::replicateOnce()
     CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
     CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
 
-    source->set_url("repl_test");
-    target->set_url("http://172.24.2.222:5984/repl_test_dest");
+    source->set_url("dbmanager_unittest");
+    target->set_url("http://localhost:5984/dbmanager_unittest_repl_test");
     target->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
     cfg.set_source(source);
     cfg.set_target(target);
@@ -547,16 +576,7 @@ void CouchDBManagerTest::replicateOnce()
 
     QVERIFY2(replicated, "Replication failed");
 
-    CouchDBManager::DBManager* remote = new CouchDBManager::DBManager(this);
-    QStringList roles;
-
-    remote->set_server_address("http://172.24.2.222:5984");
-    remote->set_database_name("repl_test_dest");
-    remote->login("root", "root", roles);
-    remote->delete_database("repl_test_dest");
-    remote->logout();
-
-    delete remote;
+    db->delete_database("dbmanager_unittest_repl_test");
 }
 
 void CouchDBManagerTest::addReplicationService()
@@ -567,9 +587,9 @@ void CouchDBManagerTest::addReplicationService()
     CouchDBManager::ServerResource* source = new CouchDBManager::ServerResource(this);
     CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
 
-    source->set_url("http://localhost:5984/aunia_data");
+    source->set_url("http://localhost:5984/dbmanager_unittest");
     source->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
-    target->set_url("http://172.24.2.222:5984/repl_test_dest");
+    target->set_url("http://localhost:5984/dbmanager_unittest_repl_test");
     target->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
     cfg.set_source(source);
     cfg.set_target(target);
@@ -590,16 +610,17 @@ void CouchDBManagerTest::addFilteredReplicationService()
     CouchDBManager::ServerResource* target = new CouchDBManager::ServerResource(this);
     QMap<QString, QVariant> params;
 
-    source->set_url("http://localhost:5984/aunia_data");
+    source->set_url("http://localhost:5984/dbmanager_unittest");
     source->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
-    target->set_url("http://localhost:5984/repl_test_dest_cars_only");
+    target->set_url("http://localhost:5984/dbmanager_unittest_repl_test_cars_only");
     target->set_authorization( CouchDBManager::DBManager::base64_encode("root:root") );
     cfg.set_source(source);
     cfg.set_target(target);
     cfg.set_create_target(true);
     cfg.set_continuous(true);
     cfg.set_filter("commons/by_query");
-    params.insert("where", "collection='car'");
+    params.insert("where", "collection='car' or _id like 'commons-'");
+//    params.insert("include_docs", "true");
     cfg.set_query_params(params);
 
     bool added = db->add_replication_service(&cfg);
