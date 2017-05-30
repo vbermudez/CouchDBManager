@@ -35,6 +35,8 @@
 #include <QMetaProperty>
 #include <QDebug>
 
+#include "rapidjson/document.h"
+
 /**
  * @brief El namespace CouchDBManager aisla las clases para evitar duplicidades.
  */
@@ -138,6 +140,10 @@ namespace CouchDBManager
          * @param json Objeto JSON.
          */
 //        void write(QJsonObject &json) const;
+
+        void read_rapidjson(const rapidjson::Value &json);
+
+        QVariant rjValue2Variant(const rapidjson::Value &m_value) const;
 
         bool is_base_object(QObject* object) const;
 

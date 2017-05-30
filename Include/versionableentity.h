@@ -39,6 +39,7 @@ namespace CouchDBManager
         Q_OBJECT
         Q_PROPERTY(int version READ get_version WRITE set_version)
         Q_PROPERTY(bool working READ get_working WRITE set_working)
+        Q_PROPERTY(QString virtual_type READ get_virtual_type WRITE set_virtual_type)
         Q_PROPERTY(bool locked READ get_locked WRITE set_locked)
         Q_PROPERTY(QString locked_by READ get_locked_by WRITE set_locked_by)
 
@@ -47,6 +48,7 @@ namespace CouchDBManager
         bool working;
         bool locked;
         QString locked_by;
+        QString virtual_type;
 
     public:
         Q_INVOKABLE VersionableEntity(QObject *parent = 0) : CouchDBManager::BaseEntity(parent) {
@@ -66,6 +68,9 @@ namespace CouchDBManager
 
         void set_locked_by(const QString& a_locked);
         QString get_locked_by() const;
+
+        QString get_virtual_type() const;
+        void set_virtual_type(const QString &value);
 
         bool is_versionable_entity() const { return true; }
     };
