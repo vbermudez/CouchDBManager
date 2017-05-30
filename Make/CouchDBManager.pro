@@ -55,6 +55,10 @@ HEADERS += \
     $$PROJECT_DIR/Include/replicationconfig.h \
     $$PROJECT_DIR/Include/usercontext.h \
     $$PROJECT_DIR/Include/versionableentity.h \
+    $$PROJECT_DIR/Include/rapidjson/*.h \
+    $$PROJECT_DIR/Include/rapidjson/error/*.h \
+    $$PROJECT_DIR/Include/rapidjson/internal/*.h \
+    $$PROJECT_DIR/Include/rapidjson/msinttypes/*.h \
 
 unix {
     target.path = /usr/lib
