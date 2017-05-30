@@ -39,3 +39,13 @@ QString CouchDBManager::VersionableEntity::get_locked_by() const
 {
     return this->locked_by;
 }
+
+QString CouchDBManager::VersionableEntity::get_virtual_type() const
+{
+    return virtual_type;
+}
+
+void CouchDBManager::VersionableEntity::set_virtual_type(const QString &value)
+{
+    virtual_type = value;
+}
