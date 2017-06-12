@@ -259,7 +259,7 @@ void CouchDBManager::BaseObject::read_rapidjson(const rapidjson::Value &json)
 
                     qDebug() << "# meta_object: " << item_meta_object->className();
 
-                    for (int i = 0; i < json[name_string.c_str()].Size(); ++i)
+                    for (size_t i = 0; i < json[name_string.c_str()].Size(); ++i)
                     {
                         // VBG - 20161130: SE CAMBIA EL PARENT A this->parent() SEGÚN EL CORREO DE Jon Gurrutxaga del 23/11/2016
                         CouchDBManager::BaseObject* entity = qobject_cast<CouchDBManager::BaseObject*>( item_meta_object->newInstance( Q_ARG(QObject*, this->parent()) ) );
