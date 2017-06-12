@@ -481,11 +481,108 @@ QString CouchDBManager::DBManager::request(const QUrl& url, const QByteArray& ba
     return result;
 }
 
+QByteArray CouchDBManager::DBManager::request_rapidjson(const QUrl& url, const QByteArray& ba_data, const QString& partial, CouchDBManager::DBManager::HTTP_METHOD method)
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+
+    this->reset_errors();
+
+    QNetworkRequest request(url);
+    QNetworkReply *reply = NULL;
+
+    bool use_auth_cookie = (partial != "_session");
+    this->set_common_headers(&request, use_auth_cookie);
+
+    switch (method)
+    {
+        case GET:
+            reply = this->manager->get(request);
+
+            break;
+
+        case POST:
+            request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
+            request.setHeader(QNetworkRequest::ContentLengthHeader, ba_data.length());
+
+            reply = this->manager->post(request, ba_data);
+
+            break;
+
+        case PUT:
+            if (!ba_data.isNull() && !ba_data.isEmpty())
+            {
+                request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json; charset=utf-8");
+                request.setHeader(QNetworkRequest::ContentLengthHeader, ba_data.length());
+            }
+
+            reply = this->manager->put(request, ba_data);
+
+            break;
+
+        case DEL:
+            reply = this->manager->deleteResource(request);
+
+            break;
+    }
+
+    Q_ASSERT(reply);
+
+    QByteArray result;
+
+    if (!this->waitForReply(reply))
+    {
+        this->set_network_error( QNetworkReply::TimeoutError );
+        this->set_error_string( "Network timeout" );
+        qCritical() << "CouchDBManager::DBManager::request FATAL " << this->error_string;
+    }
+    else if (reply->error() != QNetworkReply::NoError && reply->error() != QNetworkRequest::RedirectionTargetAttribute)
+    {
+        this->set_network_error( reply->error() );
+        this->set_error_string( reply->errorString() );
+        qCritical() << "CouchDBManager::DBManager::request FATAL " << this->error_string;
+    }
+    else
+    {
+        result = reply->readAll();
+
+        if(use_auth_cookie)
+        {
+            QVariant set_cookie_header = reply->header(QNetworkRequest::SetCookieHeader);
+            QList<QNetworkCookie> cookies = qvariant_cast<QList<QNetworkCookie> >(set_cookie_header);
+
+            for(int i=0; i < cookies.size(); ++i)
+            {
+                qDebug() << "# Set Cookie:" << cookies[i].name() << cookies[i].value();
+
+                if (cookies[i].name() == "AuthSession")
+                {
+                    this->set_auth_cookie( QString(cookies[i].value()) );
+                    break;
+                }
+            }
+        }
+    }
+
+    delete reply;
+
+    qDebug() << "<" << Q_FUNC_INFO;
+
+    return result;
+}
+
+
 QString CouchDBManager::DBManager::do_get(const QString& partial, const QString& query_string)
 {
     qDebug() << "><" << Q_FUNC_INFO;
 
     return this->do_get(partial, query_string, true);
+}
+
+QByteArray CouchDBManager::DBManager::do_get_rapidjson(const QString& partial, const QString& query_string)
+{
+    qDebug() << "><" << Q_FUNC_INFO;
+
+    return this->do_get_rapidjson(partial, query_string, true);
 }
 
 QString CouchDBManager::DBManager::do_get(const QString& partial, const QString& query_string, bool use_context)
@@ -497,6 +594,21 @@ QString CouchDBManager::DBManager::do_get(const QString& partial, const QString&
 
     QUrl url( get_url(partial, query_string, use_context) );
     QString result = this->request(url, QString("").toUtf8(), partial, GET);
+
+    qDebug() << "<" << Q_FUNC_INFO;
+
+    return result;
+}
+
+QByteArray CouchDBManager::DBManager::do_get_rapidjson(const QString& partial, const QString& query_string, bool use_context)
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+    qDebug() << "# Partial:" << partial;
+    qDebug() << "# Query String:" << query_string;
+    qDebug() << "# Use context:" << use_context;
+
+    QUrl url( get_url(partial, query_string, use_context) );
+    QByteArray result = this->request_rapidjson(url, QString("").toUtf8(), partial, GET);
 
     qDebug() << "<" << Q_FUNC_INFO;
 
@@ -587,6 +699,17 @@ QString CouchDBManager::DBManager::do_delete(const QString& partial, const QStri
     qDebug() << "<" << Q_FUNC_INFO;
 
     return result;
+}
+
+
+rapidjson::Document CouchDBManager::DBManager::string_2_rapidjson_object(const QString &str)
+{
+    qDebug() << "><" << Q_FUNC_INFO;
+
+    rapidjson::Document json_result;
+    json_result.Parse(str.toStdString().c_str());
+
+    return json_result;
 }
 
 QJsonObject CouchDBManager::DBManager::string_2_json_object(const QString &str, QJsonParseError* json_parse_error)
@@ -944,6 +1067,74 @@ QJsonObject CouchDBManager::DBManager::bulk_docs(QList<QObject*> entities)
 
     return json_object;
 }
+
+rapidjson::Document CouchDBManager::DBManager::bulk_rapidjson_docs(QList<QObject*> entities)
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+
+    QList<CouchDBManager::DBManagerResponse*> responses;
+    rapidjson::Document  docs;
+    rapidjson::Document values;
+    values.SetArray();
+    rapidjson::Document _documents;
+    rapidjson::Document json_doc;
+
+    foreach (QObject *obj, entities)
+    {
+        if (!this->is_base_entity(obj))
+        {
+            QString err = QString(Q_FUNC_INFO) + " FATAL One o more object does not inherit from BaseEntity.";
+
+            this->set_error_string(err);
+            qCritical() << err;
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return _documents;
+        }
+
+        CouchDBManager::BaseEntity* entity = qobject_cast<CouchDBManager::BaseEntity*>(obj);
+        bool is_relation_entity = this->is_relation_entity(entity);
+
+        this->object_2_rapidjson<CouchDBManager::BaseEntity>(entity, json_doc, is_relation_entity);
+        values.PushBack(json_doc, values.GetAllocator());
+    }
+
+    docs.SetObject();
+    docs.AddMember("docs", values, docs.GetAllocator());
+    std::string data = this->get_rjson_string(docs);
+
+    qDebug() << "# JSON Document: " << data.c_str();
+
+    QString result = this->do_post(QString::fromUtf8(data.c_str()), "_bulk_docs");
+
+    qDebug() << "# do_post: " << result;
+
+    if (result.isNull() || result.isEmpty())
+    {
+        qDebug() << "# Errors?: " << this->error_string;
+        qDebug() << "<" << Q_FUNC_INFO;
+
+        return rapidjson::Document();
+    }
+
+    rapidjson::Document json = this->string_2_rapidjson_object(result);
+
+    if (json.HasParseError())
+    {
+        QString err = QString(Q_FUNC_INFO) + " FATAL " + rapidjson::GetParseError_En(json.GetParseError());
+
+        this->set_error_string(err);
+        qCritical() << err;
+        qDebug() << "<" << Q_FUNC_INFO;
+
+        return rapidjson::Document();
+    }
+
+    qDebug() << "<" << Q_FUNC_INFO;
+
+    return json;
+}
+
 
 QStringList CouchDBManager::DBManager::uuids(int num)
 {

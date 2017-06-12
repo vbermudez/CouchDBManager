@@ -155,6 +155,12 @@
 #include "basereferencesimple.h"
 #include "activetask.h"
 
+#include "rapidjson/document.h"     // rapidjson's DOM-style API
+#include "rapidjson/error/error.h"
+#include "rapidjson/error/en.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
+
 
 /**
  * @brief El namespace CouchDBManager aisla las clases para evitar duplicidades
@@ -284,6 +290,7 @@ namespace CouchDBManager
          * @return QString con la respuesta del servicio.
          */
         QString request(const QUrl& url, const QByteArray& ba_data, const QString& partial, CouchDBManager::DBManager::HTTP_METHOD method);
+        QByteArray request_rapidjson(const QUrl& url, const QByteArray& ba_data, const QString& partial, CouchDBManager::DBManager::HTTP_METHOD method);
         /**
          * @brief do_get Envía una petición GET a CouchDB.
          * @param partial Especifica una ruta parcial para añadir a la url.
@@ -291,6 +298,7 @@ namespace CouchDBManager
          * @return QString con el resultado de la consulta. Debería ser un texto JSON.
          */
         QString do_get(const QString& partial, const QString& query_string);
+        QByteArray do_get_rapidjson(const QString& partial, const QString& query_string);
         /**
          * @brief do_get Envía una petición GET a CouchDB.
          * @param partial Especifica una ruta parcial para añadir a la url.
@@ -299,6 +307,7 @@ namespace CouchDBManager
          * @return QString con el resultado de la consulta. Debería ser un texto JSON.
          */
         QString do_get(const QString& partial, const QString& query_string, bool use_context);
+        QByteArray do_get_rapidjson(const QString& partial, const QString& query_string, bool use_context);
         /**
          * @brief do_post Envía una petición POST a CouchDB.
          * @param data Son los datos a enviar en la petición. Debería ser un texto JSON o con formato QueryString.
@@ -343,6 +352,8 @@ namespace CouchDBManager
          */
         QString do_delete(const QString& partial, const QString& query_string, bool use_context);
 
+
+        rapidjson::Document string_2_rapidjson_object(const QString &str);
         /**
          * @brief string_2_json_object Transforma una cadena JSON en un objeto QJsonObject.
          * @param str Cadena con el texto JSON a tranformar.
@@ -427,6 +438,14 @@ namespace CouchDBManager
 
             return this->object_2_json<T>(object, json, false);
         }
+
+        template <class T>
+        bool object_2_rapidjson(T* object, rapidjson::Document &json)
+        {
+            qDebug() << "><" << Q_FUNC_INFO;
+
+            return this->object_2_rapidjson<T>(object, json, false);
+        }
         /**
          * @brief object_2_json Transforma un objeto derivador de BaseObject en un objeto QJsonObject.
          * @param object Objeto que dervica de BaseObject.
@@ -439,6 +458,14 @@ namespace CouchDBManager
             qDebug() << "><" << Q_FUNC_INFO;
 
             return this->object_2_json<T>(object, json, relation_as_entity, false);
+        }
+
+        template <class T>
+        bool object_2_rapidjson(T* object, rapidjson::Document &json, bool relation_as_entity)
+        {
+            qDebug() << "><" << Q_FUNC_INFO;
+
+            return this->object_2_rapidjson<T>(object, json, relation_as_entity, false);
         }
         /**
          * @brief object_2_json Transforma un objeto derivador de BaseObject en un objeto QJsonObject.
@@ -453,6 +480,14 @@ namespace CouchDBManager
             qDebug() << "><" << Q_FUNC_INFO;
 
             return this->object_2_json<T>(object, json, relation_as_entity, gen_uuid, true);
+        }
+
+        template <class T>
+        bool object_2_rapidjson(T* object, rapidjson::Document &json, bool relation_as_entity, bool gen_uuid)
+        {
+            qDebug() << "><" << Q_FUNC_INFO;
+
+            return this->object_2_rapidjson<T>(object, json, relation_as_entity, gen_uuid, true);
         }
 
         /**
@@ -844,6 +879,374 @@ namespace CouchDBManager
             return is_bulk_docs;
         }
 
+ template <class T>
+        bool object_2_rapidjson(T* object, rapidjson::Document &rj_json, bool relation_as_entity, bool gen_uuid, bool load_relations)
+        {
+
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            bool is_bulk_docs = false;
+            const QMetaObject* meta_object = object->metaObject();
+            QString class_name = meta_object->className();
+            QString static_class_name = object->staticMetaObject.className();
+
+            rapidjson::Document rj_other_docs;
+            rapidjson::Document relation_json;
+            rapidjson::Document rj_json_tmp;
+            rapidjson::Document rj_item_json_2;
+            rapidjson::Document item_json;
+            rapidjson::Document array_value;
+            rapidjson::Document rj_relation_json;
+            rapidjson::Document relation_prop_json;
+            rapidjson::Document related_json;
+
+            rapidjson::Document rj_item_json;
+            rapidjson::Document rj_relation_property;
+
+            rj_other_docs.SetArray();
+            rj_json_tmp.SetObject();
+
+            bool is_a_rel_ent = this->is_relation_entity(object);
+            QString uuid;
+
+            qDebug() << "# Write JSON for: " << class_name << "Inherited from: " << static_class_name;
+            qDebug() << "# Generate UUIDs:" << gen_uuid;
+
+            if (gen_uuid)
+            {
+                QStringList uuids = this->uuids(1);
+
+                if (!uuids.isEmpty() && this->is_base_entity(object))
+                {
+                    uuid = uuids.at(0);
+                }
+            }
+
+            for (int i = 0; i < meta_object->propertyCount(); ++i)
+            {
+                QMetaProperty meta_prop = meta_object->property(i);
+                std::string name = meta_prop.name();
+
+                qDebug() << "# Procesando propiedad" << name.c_str();
+
+                if (name == "objectName")
+                {
+                    continue;
+                }
+
+                rapidjson::Value _key(name.c_str(), name.size(), rj_json_tmp.GetAllocator());
+
+                if (gen_uuid && name == "_id")
+                {
+                    QVariant _id_value = object->property(meta_prop.name());
+
+                    if (_id_value.isNull() || !_id_value.isValid())
+                    {
+                        qDebug() << "# Escribiendo UUID" << uuid;
+
+                        meta_prop.write(object, QVariant(uuid));
+                    }
+                    else
+                    {
+                        qDebug() << "# La propiedad _id ya tiene un valor:" << _id_value;
+                    }
+                }
+
+                QVariant value = object->property(meta_prop.name());
+
+                if ( QString( meta_prop.typeName() ).startsWith("QList") )
+                {
+                    qDebug() << "# Es un array:" << value.typeName();
+
+                    QList<QVariant> value_list = object->toList(value);
+
+                    if (value_list.isEmpty())
+                    {
+                        qDebug() << "# El array original est? vacio.";
+
+                        rapidjson::Value _nullValue;
+                        _nullValue.SetNull();
+                        rj_json_tmp.AddMember(_key.Move(), _nullValue, rj_json_tmp.GetAllocator());
+                        continue;
+                    }
+
+                    array_value.SetArray();
+
+                    foreach (const QVariant &item, value_list)
+                    {
+                        if (this->is_relation_entity( qvariant_cast<QObject*>(item) ))
+                        {
+                            qDebug() << "# Item es RelationEntity.";
+
+                            if (!load_relations)
+                            {
+                                qDebug() << "# No se procesa por ser un objeto ya relacionado.";
+                                continue;
+                            }
+
+                            const QMetaObject* relation_meta = qvariant_cast<CouchDBManager::RelationEntity*>(item)->metaObject();
+
+                            this->object_2_rapidjson<CouchDBManager::RelationEntity>( qvariant_cast<CouchDBManager::RelationEntity*>(item), relation_json, true, gen_uuid);
+
+                            for (int i = 0, len = relation_meta->propertyCount(); i < len; i++)
+                            {
+                                QMetaProperty relation_prop = relation_meta->property(i);
+                                std::string prop_name = relation_prop.name();
+                                QVariant relation_prop_value = relation_prop.read(item.value<QObject*>());
+
+                                if (this->is_base_entity(relation_prop_value.value<QObject*>()))
+                                {
+                                    CouchDBManager::BaseEntity* related_entity = qvariant_cast<CouchDBManager::BaseEntity*>(relation_prop_value);
+                                    const QMetaObject* rel_ent_meta_object = related_entity->metaObject();
+                                    QString rel_ent_class_name = rel_ent_meta_object->className();
+
+                                    if (rel_ent_class_name != class_name)
+                                    {
+                                        related_json.SetObject();
+
+                                        this->object_2_rapidjson( related_entity, relation_prop_json, false, gen_uuid, false);
+                                        related_json.RemoveMember("objectName");
+                                        related_json.AddMember("id", relation_prop_json["_id"], related_json.GetAllocator());
+
+                                        if (relation_prop_json.HasMember("version"))
+                                        {
+                                            related_json.AddMember("version", relation_prop_json["version"], related_json.GetAllocator());
+                                        }
+
+                                        rapidjson::Value _prop_key(prop_name.c_str(), name.size(), relation_json.GetAllocator());
+                                        relation_json.AddMember(_prop_key, related_json, relation_json.GetAllocator());
+                                        rj_other_docs.PushBack(relation_prop_json, rj_other_docs.GetAllocator());
+                                    }
+                                    else
+                                    {
+                                        qDebug() << "# Referencia circular detectada. No se procesar? la relaci?n por tratarse del mismo documento:" << rel_ent_class_name << related_entity->get_collection() << related_entity->get_id();
+                                    }
+                                }
+                                else
+                                {
+                                    addQVariant2Document(relation_json,prop_name,relation_prop_value);
+                                }
+                            }
+
+                            if (relation_as_entity)
+                            {
+                                rj_json_tmp.CopyFrom(relation_json, rj_json_tmp.GetAllocator());
+                            }
+
+                            rj_other_docs.PushBack(relation_json, rj_other_docs.GetAllocator());
+                        }
+                        else if (this->is_base_entity( qvariant_cast<QObject*>(item) ))
+                        {
+                            qDebug() << "# Item es BaseEntity.";
+                            if (!load_relations)
+                            {
+                                qDebug() << "# No se procesa por ser un objeto ya relacionado.";
+                                continue;
+                            }
+
+                            this->object_2_rapidjson<CouchDBManager::BaseEntity>( qvariant_cast<CouchDBManager::BaseEntity*>(item), item_json, false, gen_uuid, false);
+                            rj_other_docs.PushBack(item_json,rj_other_docs.GetAllocator());
+                        }
+                        else if (this->is_base_reference( qvariant_cast<QObject*>(value) ))
+                        {
+                            qDebug() << "# Item es BaseReference.";
+
+                            this->object_2_rapidjson<CouchDBManager::BaseReference>( qvariant_cast<CouchDBManager::BaseReference*>(value), item_json, false);
+                            array_value.PushBack(item_json, array_value.GetAllocator());
+                        }
+                        else if (this->is_base_reference_simple( qvariant_cast<QObject*>(value) ))
+                        {
+                            qDebug() << "# Item es BaseReference simple.";
+
+                            this->object_2_rapidjson<CouchDBManager::BaseReferenceSimple>( qvariant_cast<CouchDBManager::BaseReferenceSimple*>(value), item_json, false);
+                            array_value.PushBack(item_json, array_value.GetAllocator());
+                        }
+                        else if (this->is_base_object( qvariant_cast<QObject*>(item) ))
+                        {
+                            qDebug() << "# Item es BaseObject.";
+
+                            this->object_2_rapidjson<CouchDBManager::BaseObject>( qvariant_cast<CouchDBManager::BaseObject*>(item), item_json, false);
+                            array_value.PushBack(item_json, array_value.GetAllocator());
+                        }
+                        else
+                        {
+                            qDebug() << "# Item no es una entidad.";
+                            addQVariant2Document(array_value,name,item);
+                        }
+                    }
+
+                    if (!array_value.Empty())
+                    {
+                        qDebug() << "# El array no esta vacio.";
+                        rj_json_tmp.AddMember(_key, array_value, rj_json_tmp.GetAllocator());
+                    }
+                }
+                else
+                {
+                    qDebug() << "# Es un valor simple";
+
+                    if (value.isNull() || !value.isValid())
+                    {
+                        qDebug() << "# Es nulo o inv?lido.";
+                        continue;
+                    }
+
+
+                    if (this->is_relation_entity( qvariant_cast<QObject*>(value) ))
+                    {
+                        qDebug() << "# La propiedad es RelationEntity.";
+
+                        if (!load_relations)
+                        {
+                            qDebug() << "# No se procesa por ser un objeto ya relacionado.";
+                            continue;
+                        }
+
+                        const QMetaObject* relation_meta = qvariant_cast<CouchDBManager::RelationEntity*>(value)->metaObject();
+
+                        this->object_2_rapidjson<CouchDBManager::RelationEntity>( qvariant_cast<CouchDBManager::RelationEntity*>(value), rj_relation_json, true, gen_uuid);
+                        rj_other_docs.PushBack(rj_relation_json,rj_other_docs.GetAllocator());
+
+                        for (int i = 0, len = relation_meta->propertyCount(); i < len; i++)
+                        {
+                            QMetaProperty relation_prop = relation_meta->property(i);
+                            QVariant relation_prop_value = relation_prop.read(value.value<QObject*>());
+                            std::string relation_prop_name = relation_prop.name();
+                            rapidjson::Value _relation_prop_key(name.c_str(), name.size(), rj_json_tmp.GetAllocator());
+
+                            if (this->is_base_entity(relation_prop_value.value<QObject*>()))
+                            {
+                                rapidjson::Document rj_item_json;
+                                rapidjson::Document rj_related_json;
+
+                                this->object_2_rapidjson( qvariant_cast<CouchDBManager::BaseEntity*>(relation_prop_value), rj_item_json, false, gen_uuid, false);
+
+                                rj_related_json.RemoveMember("objectName");
+                                rj_related_json.AddMember("id", rj_item_json["_id"], rj_related_json.GetAllocator());
+
+                                if (rj_item_json.HasMember("version"))
+                                {
+                                    rj_related_json.AddMember("version", rj_item_json["version"], rj_related_json.GetAllocator());
+                                }
+
+                                rj_relation_json.AddMember(_relation_prop_key, rj_related_json, rj_relation_json.GetAllocator());
+                                rj_other_docs.PushBack(rj_item_json, rj_other_docs.GetAllocator());
+                            }
+                            else
+                            {
+                                addQVariant2Document(rj_relation_json,relation_prop_name,relation_prop_value);
+                            }
+                        }
+
+                        if (relation_as_entity)
+                        {
+                             rj_json_tmp.CopyFrom(rj_relation_json, rj_json_tmp.GetAllocator());
+                        }
+
+                        rj_other_docs.PushBack(rj_relation_json,rj_other_docs.GetAllocator());
+                    }
+                    else if (this->is_base_entity( qvariant_cast<QObject*>(value) ))
+                    {
+                        qDebug() << "# La propiedad es BaseEntity.";
+
+                        if (!load_relations)
+                        {
+                            qDebug() << "# No se procesa por ser un objeto ya relacionado.";
+                            continue;
+                        }
+
+                        this->object_2_rapidjson<CouchDBManager::BaseEntity>( qvariant_cast<CouchDBManager::BaseEntity*>(value), rj_item_json, false, gen_uuid, false);
+
+                        if (rj_item_json.HasMember("objectName"))
+                        {
+                            rj_item_json.RemoveMember("objectName");
+                        }
+
+                        if (is_a_rel_ent)
+                        {
+                            qDebug() << "# Se a?ade id y version de la entidad relacionada por ser un RelationEntity.";
+
+
+                            rj_relation_property.SetObject();
+
+                            std::string _id = rj_item_json["_id"].GetString();
+                            std::string _rev = rj_item_json["_rev"].GetString();
+
+                            rj_relation_property.AddMember("id", rj_item_json["_id"],rj_relation_property.GetAllocator());
+
+                            if (rj_item_json.HasMember("version"))
+                            {
+                                rj_relation_property.AddMember("version",rj_item_json["version"],rj_relation_property.GetAllocator());
+                            }
+
+                            rapidjson::Value _key_name(name.c_str(), name.size(), rj_relation_property.GetAllocator());
+                            rj_json_tmp.AddMember(_key_name.Move(),rj_relation_property.Move(),rj_json_tmp.GetAllocator());
+
+//                            QJsonArray relation_list_prop;
+
+//                            if (rj_item_json.HasMember(class_name.toLower().toStdString().c_str()))
+//                            {
+//                                relation_list_prop = item_json[class_name.toLower()].toArray();
+//                            }
+
+                            if ( _id.empty() && _rev.empty())
+                            {
+                                rj_other_docs.PushBack(rj_item_json,rj_other_docs.GetAllocator());
+                            }
+                        }
+                        else
+                        {
+                             rj_other_docs.PushBack(rj_item_json,rj_other_docs.GetAllocator());
+                        }
+                    }
+                    else if (this->is_base_reference( qvariant_cast<QObject*>(value) ))
+                    {
+                        qDebug() << "# La propiedad es BaseReference.";
+                        this->object_2_rapidjson<CouchDBManager::BaseReference>( qvariant_cast<CouchDBManager::BaseReference*>(value), rj_item_json_2, false);
+                        rj_json_tmp.AddMember(_key, rj_item_json_2, rj_json_tmp.GetAllocator());
+                    }
+                    else if (this->is_base_reference_simple( qvariant_cast<QObject*>(value) ))
+                    {
+                        qDebug() << "# La propiedad es BaseReferenceSimple.";
+                        this->object_2_rapidjson<CouchDBManager::BaseReferenceSimple>( qvariant_cast<CouchDBManager::BaseReferenceSimple*>(value), rj_item_json_2, false);
+                        rj_json_tmp.AddMember(_key,rj_item_json_2, rj_json_tmp.GetAllocator());
+                    }
+                    else if (this->is_base_object( qvariant_cast<QObject*>(value) ))
+                    {
+                        qDebug() << "# La propiedad es BaseObject.";
+                        this->object_2_rapidjson<CouchDBManager::BaseObject>( qvariant_cast<CouchDBManager::BaseObject*>(value), rj_item_json_2, false);
+                        rj_json_tmp.AddMember(_key,rj_item_json_2, rj_json_tmp.GetAllocator());
+                    }
+                    else
+                    {
+                        qDebug() << "# La propiedad no es una entidad.";
+                        addQVariant2Document(rj_json_tmp,name,value);
+                    }
+                }
+
+
+            }
+
+
+            if (rj_other_docs.Empty() || relation_as_entity)
+            {
+                qDebug() << "# Utilizando formato documento";
+                rj_json.CopyFrom(rj_json_tmp,rj_json.GetAllocator());
+            }
+            else
+            {
+                qDebug() << "# Utilizando formato _bulk_docs";
+
+                is_bulk_docs = true;
+                rj_other_docs.PushBack(rj_json_tmp,rj_other_docs.GetAllocator());
+                rj_json.AddMember("docs",rj_other_docs,rj_json.GetAllocator());
+            }
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return is_bulk_docs;
+        }
+
         /**
          * @brief reset_errors Restablece el control de errores.
          */
@@ -1226,6 +1629,155 @@ namespace CouchDBManager
 
             return response;
         }
+
+        /**
+         * @brief create Crea un nuevo documento en CouchDB.
+         * @param entity Objeto que extiende BaseEntity.
+         * @return QJsonObject con la respuesta del servidor. Contiene el nuevo _id.
+         */
+        template <class T>
+        CouchDBManager::DBManagerResponse* create_rapidjson(T* entity)
+        {
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            CouchDBManager::DBManagerResponse* response = new CouchDBManager::DBManagerResponse(this);
+            const char* entityClass = entity->metaObject()->className();
+            const char* className = entity->staticMetaObject.className();
+            bool is_bulk_docs = false;
+
+            qDebug() << "# Entity:" << entityClass << "derived from:" << className;
+
+            if (!this->is_base_entity(entity))
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+                response->set_went_ok(false);
+                response->set_response(err);
+            }
+            else
+            {
+                rapidjson::Document rapidjson_object;
+                is_bulk_docs = this->object_2_rapidjson<T>(entity, rapidjson_object, false, true);
+                std::string json_string = this->get_rjson_string(rapidjson_object);
+
+                //qDebug() << "# JSON String (_bulk_docs:" << is_bulk_docs << "):" << json_string;
+
+                if (is_bulk_docs)
+                {
+                    qDebug() << "# Procesando para _bulk_docs";
+                    QStringList last_ids;
+
+                    //for (rapidjson::Value::ConstValueIterator itr = rapidjson_object["docs"].Begin(); itr != rapidjson_object["docs"].End(); ++itr)
+                    for (rapidjson::SizeType i = 0; i < rapidjson_object["docs"].Size(); ++i)
+                    {
+                        if (rapidjson_object["docs"][i].HasMember("_id") && last_ids.contains(rapidjson_object["docs"][i]["_id"].GetString()))
+                        {
+                            continue;
+                        }
+
+                        if (rapidjson_object["docs"][i].HasMember("_id") && last_ids.contains(rapidjson_object["docs"][i]["_id"].GetString()))
+                        {
+                            continue;
+                        }
+
+                        if (rapidjson_object["docs"][i].HasMember("_rev") && rapidjson_object["docs"][i]["_rev"].IsNull() || rapidjson_object["docs"][i]["_rev"].Empty())
+                        {
+                            rapidjson_object["docs"][i].RemoveMember("_rev");
+                        }
+
+                        if (rapidjson_object["docs"][i].HasMember("objectName"))
+                        {
+                            rapidjson_object["docs"][i].RemoveMember("objectName");
+                        }
+
+                        last_ids.append( rapidjson_object["docs"][i]["_id"].GetString() );
+
+                    }
+
+                    json_string = get_rjson_string(rapidjson_object);
+
+                }
+                else if (rapidjson_object.HasMember("_rev"))
+                {
+                    qDebug() << "# Procesando documento";
+
+                    rapidjson_object.RemoveMember("_rev");
+
+                    json_string = get_rjson_string(rapidjson_object);
+
+                    qDebug() << "# JSON String corrected: " << json_string.c_str();
+                }
+
+                QString result;
+
+                if (is_bulk_docs)
+                {
+                    result = this->do_post(QString::fromUtf8(json_string.c_str()), "_bulk_docs" );
+                }
+                else
+                {
+                    result = this->do_post( QString::fromUtf8(json_string.c_str()) );
+                }
+
+                qDebug() << "# do_post: " << result;
+
+                if (result.isNull() || result.isEmpty())
+                {
+                    response->set_went_ok(false);
+                    response->set_response(this->error_string);
+                    qDebug() << "# Errors?: " << this->error_string;
+                }
+                else
+                {
+                    QJsonParseError json_parse_error;
+                    rapidjson::Document json;
+
+                    if (is_bulk_docs)
+                    {
+                        QJsonArray json = this->string_2_json_array(result, &json_parse_error);
+
+                        if (json_parse_error.error == QJsonParseError::NoError)
+                        {
+                            this->update_entity_from_bulk_docs<T>(entity, json);
+                        }
+                    }
+                    else
+                    {
+                        json = this->string_2_rapidjson_object(result);
+
+                        if (!json.HasParseError())
+                        {
+                            entity->set_id(json["id"].GetString());
+                            entity->set_rev(json["rev"].GetString());
+                        }
+                    }
+
+                    if (json.HasParseError())
+                    {
+                        QString err = QString(Q_FUNC_INFO) + " FATAL " + rapidjson::GetParseError_En(json.GetParseError());
+
+                        this->set_error_string(err);
+                        qCritical() << err;
+                        response->set_went_ok(false);
+                        response->set_response( err );
+                    }
+                    else
+                    {
+                        response->set_went_ok(true);
+                        response->set_response( "Entity created" );
+                    }
+                }
+            }
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return response;
+        }
+
+
         /**
          * @brief read Recupera la última revisión de un documento de CouchDB.
          * @param id Identificador único del documento.
@@ -1257,6 +1809,65 @@ namespace CouchDBManager
 
             qDebug() << "<" << Q_FUNC_INFO;
         }
+
+        /**
+         * @brief read Recupera un documento de CouchDB, seg?n los par?metro proporcionados.
+         * @param id Identificador ?nico del documento.
+         * @param query_string Especifica una lista de par?metros, con formato QueryString.
+         * @param entity Instancia de un objeto derivado de BaseEntity.
+         * @return Entidad CouchDBManager::BaseEntity con la informaci?n recuperada de CouchDB.
+         */
+        template <class  T>
+        void read_rapidjson(const QString& id, const QString& query_string, T* entity)
+        {
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            const char* entityClass = entity->metaObject()->className();
+            const char* className = entity->staticMetaObject.className();
+
+            qDebug() << "# Entity:" << entityClass << "derived from:" << className;
+
+            if (!this->is_base_entity(entity))
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+//                qFatal(err.toStdString().c_str());
+
+                return;
+            }
+
+            QByteArray result_rapidjson = this->do_get_rapidjson(id, query_string);
+
+            //qDebug() << "# do_get: " << result_rapidjson;
+
+            if (result_rapidjson.isNull() || result_rapidjson.isEmpty())
+            {
+                qDebug() << "# Errors?: " << this->error_string;
+
+                return;
+            }
+
+            rapidjson::Document json_doc;
+            rapidjson::ParseResult parse_result = json_doc.Parse(result_rapidjson);
+
+            if (!parse_result)
+            {
+
+                QString err = QString(Q_FUNC_INFO) + " FATAL " + rapidjson::GetParseError_En(parse_result.Code());
+
+                this->set_error_string(err);
+                qCritical() << err;
+                return;
+            }
+
+            entity->read_rapidjson(json_doc);
+
+            qDebug() << "<" << Q_FUNC_INFO;
+        }
+
         /**
          * @brief read Recupera un documento de CouchDB, según los parámetro proporcionados.
          * @param id Identificador único del documento.
@@ -1331,6 +1942,82 @@ namespace CouchDBManager
 
             qDebug() << "<" << Q_FUNC_INFO;
         }
+
+        template <class  T>
+        void read_with_relations_rapidjson(const QString& design_document, const QString& id, T* entity)
+        {
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            this->read_with_relations_rapidjson(design_document, id, -1, entity);
+
+            qDebug() << "<" << Q_FUNC_INFO;
+        }
+
+        template <class  T>
+        void read_with_relations_rapidjson(const QString& design_document, const QString& id, int version, T* entity)
+        {
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            QString query_string = "include_docs=true&format=json&startkey=[\"";
+            QString list = "relations";
+            QString view = entity->get_collection();
+            QString ver_str = QString("%1").arg(version);
+            QString id_str = QString(id);
+            if (version != -1)
+            {
+                id_str.append("::");
+                id_str.append(ver_str);
+            }
+            QString where = QString("_id='%1'").arg(id_str);
+
+            qDebug() << "# Design Document: " << design_document << "List: " << list << "View: " << view << "Where: " << where;
+
+            query_string.append(id_str);
+            query_string.append("\",");
+            query_string.append( version == -1 ? "0" : ver_str);
+            query_string.append(",0]&endkey=[\"");
+            query_string.append(id_str);
+            query_string.append("\",");
+            query_string.append( version == -1 ? QString("%1").arg( (std::numeric_limits<int>::max)() ) : ver_str );
+            query_string.append(",999]");
+            query_string.append("&where=");
+            query_string.append( QUrl::toPercentEncoding(where) );
+
+            qDebug() << "# Filter:" << where;
+            qDebug() << "# QueryString:" << query_string;
+
+            QString partial = "_design/commons/_list/" + list + "/" + design_document + "/" + view;
+            QString result = this->do_get(partial, query_string);
+
+            qDebug() << "# do_get: " << result;
+
+            if (result.isNull() || result.isEmpty())
+            {
+                qDebug() << "# Errors?: " << this->error_string;
+                qDebug() << "<" << Q_FUNC_INFO;
+
+                return;
+            }
+
+            rapidjson::Document json = this->string_2_rapidjson_object(result);
+
+            if (json.HasParseError())
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL " + rapidjson::GetParseError_En(json.GetParseError());
+
+                this->set_error_string(err);
+                qCritical() << err;
+                return;
+            }
+
+            if (json["rows"].GetArray().Size() > 0)
+            {
+                entity->read_rapidjson(json["rows"][0]);
+            }
+
+            qDebug() << "<" << Q_FUNC_INFO;
+        }
+
         /**
          * @brief read_with_relations Recupera la última revisión de un documento de CouchDB, cargando todas sus relaciones.
          * @param design_document Nombre del Design Document donde está la vista.
@@ -1643,6 +2330,144 @@ namespace CouchDBManager
 
             return response;
         }
+
+        /**
+         * @brief update Actualiza un documento en CouchDB.
+         * @param entity Objeto que extiende BaseEntity.
+         * @return QJsonObject con la respuesta del servidor. Contiene la nueva _rev.
+         */
+        template <class T>
+        CouchDBManager::DBManagerResponse* update_rapidjson(T* entity)
+        {
+            qDebug() << ">" << Q_FUNC_INFO;
+
+            CouchDBManager::DBManagerResponse* response = new CouchDBManager::DBManagerResponse(this);
+            const QMetaObject* meta_entity = entity->metaObject();
+            const char* entityClass = meta_entity->className();
+            const char* className = entity->staticMetaObject.className();
+            bool is_bulk_docs = false;
+
+            qDebug() << "# Entity:" << entityClass << "derived from:" << className;
+
+            if (!this->is_base_entity(entity))
+            {
+                QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
+
+                this->set_error_string(err);
+
+                qCritical() << err;
+                qDebug() << "<" << Q_FUNC_INFO;
+
+                response->set_went_ok(false);
+                response->set_response(err);
+            }
+            else
+            {
+                if (this->is_versionable_entity(entity))
+                {
+                    T persisted;
+                    int persisted_version = 0;
+                    int entity_version = 0;
+
+                    this->read_with_relations_rapidjson<T>(entity->get_id(), QString(), &persisted);
+
+                    QMetaObject::invokeMethod(&persisted, "get_version", Q_RETURN_ARG(int, persisted_version));
+                    QMetaObject::invokeMethod(entity, "get_version", Q_RETURN_ARG(int, entity_version));
+
+                    if (persisted_version != entity_version)
+                    {
+                        persisted.set_id( QString(persisted.get_id() + "::%1").arg(persisted_version) );
+                        persisted.set_rev("");
+                        QMetaObject::invokeMethod(&persisted, "set_working", Q_ARG(bool, false));
+
+                        DBManagerResponse* resp = this->create_rapidjson<T>(&persisted);
+
+                        if (!resp->get_went_ok()) {
+                            return resp;
+                        }
+                    }
+                }
+
+                rapidjson::Document rapidjson_object;
+                is_bulk_docs = this->object_2_rapidjson<T>(entity, rapidjson_object);
+
+                if (is_bulk_docs)
+                {
+                    for (rapidjson::SizeType i = 0; i < rapidjson_object["docs"].Size(); ++i)
+                    {
+                        if(rapidjson_object["docs"][i].HasMember("objectName"))
+                        {
+                            rapidjson_object["docs"][i].RemoveMember("objectName");
+                        }
+                    }
+                }
+
+                QString json_string = get_rjson_qstring(rapidjson_object);
+                QString result;
+
+                if (is_bulk_docs)
+                {
+                    result = this->do_post( json_string, "_bulk_docs" );
+                }
+                else
+                {
+                    result = this->do_post( json_string );
+                }
+
+                qDebug() << "# do_post:" << result;
+
+                if (result.isNull() || result.isEmpty())
+                {
+                    qDebug() << "# Errors?: " << this->error_string;
+
+                    response->set_went_ok(false);
+                    response->set_response(this->error_string);
+                }
+                else
+                {
+                    QJsonParseError json_parse_error;
+                    if (is_bulk_docs)
+                    {
+                        QJsonArray json_result = this->string_2_json_array(result, &json_parse_error);
+
+                        if (json_parse_error.error == QJsonParseError::NoError)
+                        {
+                            this->update_entity_from_bulk_docs<T>(entity, json_result);
+                        }
+                    }
+                    else
+                    {
+                    QJsonObject json_result = this->string_2_json_object(result, &json_parse_error);
+
+                        if (json_parse_error.error == QJsonParseError::NoError)
+                        {
+                            entity->set_rev(json_result["rev"].toString());
+                        }
+                    }
+
+                    if (json_parse_error.error != QJsonParseError::NoError)
+                    {
+                        QString err = QString(Q_FUNC_INFO) + " FATAL " + json_parse_error.errorString();
+
+                        this->set_error_string(err);
+                        qCritical() << err;
+
+                        response->set_went_ok(false);
+                        response->set_response(err);
+                    }
+                    else
+                    {
+                        response->set_went_ok(true);
+                        response->set_response( "Entity updated" );
+                    }
+                }
+            }
+
+            qDebug() << "<" << Q_FUNC_INFO;
+
+            return response;
+        }
+
         /**
          * @brief delete_doc Borra un documento de CouhDB.
          * @param document Objeto que extiende QObject.
@@ -2138,6 +2963,7 @@ namespace CouchDBManager
             return is_locked;
         }
 
+        rapidjson::Document bulk_rapidjson_docs(QList<QObject*> entities);
         /**
          * @brief bulk_docs Ejecuta un envío masivo de documentos en una sóla transacción.
          * @param documents Lista de objetos que extienden QObject.
@@ -2605,6 +3431,86 @@ namespace CouchDBManager
          * @return QString con la cadena decodificada.
          */
         static QString base64_decode(const QString& str);
+
+        std::string get_rjson_string(rapidjson::Document &value)
+        {
+            rapidjson::StringBuffer buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            value.Accept(writer);
+            return buffer.GetString();
+        }
+
+        QString get_rjson_qstring(rapidjson::Document &value)
+        {
+            rapidjson::StringBuffer buffer;
+            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+            value.Accept(writer);
+            return QString::fromUtf8(buffer.GetString());
+        }
+
+        bool addQVariant2Document(rapidjson::Document &_rj_json_doc, std::string name, const QVariant &item)
+        {
+            std::string item_type = item.typeName();
+            rapidjson::Value _key(name.c_str(), name.size(), _rj_json_doc.GetAllocator());
+
+            if (item_type=="QString")
+            {
+                std::string value_string = item.toString().toStdString();
+                rapidjson::Value _value(value_string.c_str(), value_string.size(), _rj_json_doc.GetAllocator());
+
+                if (_rj_json_doc.IsObject())
+                {
+                    _rj_json_doc.AddMember(_key, _value, _rj_json_doc.GetAllocator());
+                }
+                else if (_rj_json_doc.IsArray())
+                {
+                    _rj_json_doc.PushBack(_value,_rj_json_doc.GetAllocator());
+                }
+
+                return true;
+            }
+
+            if (item_type=="bool")
+            {
+                if (_rj_json_doc.IsObject())
+                {
+                    _rj_json_doc.AddMember(_key, item.toBool(), _rj_json_doc.GetAllocator());
+                }
+                else if (_rj_json_doc.IsArray())
+                {
+                    _rj_json_doc.PushBack(item.toBool(),_rj_json_doc.GetAllocator());
+                }
+                return true;
+            }
+
+            if (item_type=="double")
+            {
+                if (_rj_json_doc.IsObject())
+                {
+                    _rj_json_doc.AddMember(_key, item.toDouble(), _rj_json_doc.GetAllocator());
+                }
+                else if (_rj_json_doc.IsArray())
+                {
+                    _rj_json_doc.PushBack(item.toDouble(),_rj_json_doc.GetAllocator());
+                }
+                return true;
+            }
+
+            if (item_type=="int")
+            {
+                if (_rj_json_doc.IsObject())
+                {
+                    _rj_json_doc.AddMember(_key, item.toInt(), _rj_json_doc.GetAllocator());
+                }
+                else if (_rj_json_doc.IsArray())
+                {
+                    _rj_json_doc.PushBack(item.toInt(),_rj_json_doc.GetAllocator());
+                }
+                return true;
+            }
+
+            return false;
+        }
 
     private slots:
         void network_read();
