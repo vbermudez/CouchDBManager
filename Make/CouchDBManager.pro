@@ -55,6 +55,7 @@ HEADERS += \
     $$PROJECT_DIR/Include/replicationconfig.h \
     $$PROJECT_DIR/Include/usercontext.h \
     $$PROJECT_DIR/Include/versionableentity.h \
+    ../Include/lockableentity.h
 
 unix {
     target.path = /usr/lib

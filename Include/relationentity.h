@@ -32,7 +32,7 @@
 #include <QObject>
 #include <QJsonObject>
 
-#include "baseentity.h"
+#include "lockableentity.h"
 
 /**
  * @brief El namespace CouchDBManager aisla las clases para evitar duplicidades.
@@ -44,7 +44,7 @@ namespace CouchDBManager
      * @author vbermudez@xi-tek.com
      * @date 2016/06/15
      */
-    class COUCHDBMANAGERSHARED_EXPORT RelationEntity : public CouchDBManager::BaseEntity
+    class COUCHDBMANAGERSHARED_EXPORT RelationEntity : public CouchDBManager::LockableEntity
     {
         Q_OBJECT
         Q_PROPERTY(bool is_virtual READ get_is_virtual WRITE set_is_virtual)
@@ -57,7 +57,7 @@ namespace CouchDBManager
           * @brief RelationEntity Constructor por defecto.
           * @param parent QObject padre.
           */
-        Q_INVOKABLE RelationEntity(QObject *parent = 0) : CouchDBManager::BaseEntity(parent)
+        Q_INVOKABLE RelationEntity(QObject *parent = 0) : CouchDBManager::LockableEntity(parent)
         {
             is_virtual = false;
         }

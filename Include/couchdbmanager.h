@@ -862,6 +862,12 @@ namespace CouchDBManager
          */
         bool is_base_entity(QObject* object);
         /**
+         * @brief is_lockable_entity Determina si un QObject deriva de LockableEntity.
+         * @param object QObject.
+         * @return
+         */
+        bool is_lockable_entity(QObject* object);
+        /**
          * @brief is_versionable_entity Determina si un QObject deriva de VersionableEntity.
          * @param object QObject.
          * @return
@@ -1926,10 +1932,10 @@ namespace CouchDBManager
         template <class T>
         bool lock(T* entity, const QString& locked_by)
         {
-            assert((CouchDBManager::VersionableEntity const*)&entity);
+            assert((CouchDBManager::LockableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
-            if (!this->is_versionable_entity(entity))
+            if (!this->is_lockable_entity(entity))
             {
                 QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
 
@@ -1993,7 +1999,7 @@ namespace CouchDBManager
         template <class T>
         bool unlock(T* entity)
         {
-            assert((CouchDBManager::VersionableEntity const*)&entity);
+            assert((CouchDBManager::LockableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
             CouchDBManager::UserContext* uc = this->user_context();
@@ -2014,10 +2020,10 @@ namespace CouchDBManager
         template <class T>
         bool unlock(T* entity, const QString& locked_by)
         {
-            assert((CouchDBManager::VersionableEntity const*)&entity);
+            assert((CouchDBManager::LockableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
-            if (!this->is_versionable_entity(entity))
+            if (!this->is_lockable_entity(entity))
             {
                 QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
 
@@ -2085,7 +2091,7 @@ namespace CouchDBManager
         template <class T>
         bool is_locked_by_user(T* entity)
         {
-            assert((CouchDBManager::VersionableEntity const*)&entity);
+            assert((CouchDBManager::LockableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
             CouchDBManager::UserContext* uc = this->user_context();
@@ -2106,10 +2112,10 @@ namespace CouchDBManager
         template <class T>
         bool is_locked_by_user(T* entity, const QString& locked_by)
         {
-            assert((CouchDBManager::VersionableEntity const*)&entity);
+            assert((CouchDBManager::LockableEntity const*)&entity);
             qDebug() << ">" << Q_FUNC_INFO;
 
-            if (!this->is_versionable_entity(entity))
+            if (!this->is_lockable_entity(entity))
             {
                 QString err = QString(Q_FUNC_INFO) + " FATAL Incorrect Document Type";
 

@@ -28,31 +28,26 @@
 #define VERSIONABLEENTITY_H
 
 #include "couchdbmanager_global.h"
-#include "baseentity.h"
+#include "lockableentity.h"
 
 #include <QObject>
 
 namespace CouchDBManager
 {
-    class COUCHDBMANAGERSHARED_EXPORT VersionableEntity : public CouchDBManager::BaseEntity
+    class COUCHDBMANAGERSHARED_EXPORT VersionableEntity : public CouchDBManager::LockableEntity
     {
         Q_OBJECT
         Q_PROPERTY(int version READ get_version WRITE set_version)
         Q_PROPERTY(bool working READ get_working WRITE set_working)
-        Q_PROPERTY(bool locked READ get_locked WRITE set_locked)
-        Q_PROPERTY(QString locked_by READ get_locked_by WRITE set_locked_by)
 
     protected:
         int version;
         bool working;
-        bool locked;
-        QString locked_by;
 
     public:
-        Q_INVOKABLE VersionableEntity(QObject *parent = 0) : CouchDBManager::BaseEntity(parent) {
+        Q_INVOKABLE VersionableEntity(QObject *parent = 0) : CouchDBManager::LockableEntity(parent) {
             this->version = 0;
             this->working = true;
-            this->locked = false;
         }
 
     public slots:
@@ -60,12 +55,6 @@ namespace CouchDBManager
         void set_version(int a_version);
         bool get_working() const;
         void set_working(bool a_working);
-
-        void set_locked(bool a_locked);
-        bool get_locked() const;
-
-        void set_locked_by(const QString& a_locked);
-        QString get_locked_by() const;
 
         bool is_versionable_entity() const { return true; }
     };

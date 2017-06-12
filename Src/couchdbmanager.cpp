@@ -1051,6 +1051,36 @@ bool CouchDBManager::DBManager::is_base_entity(QObject *object)
     return is_be;
 }
 
+bool CouchDBManager::DBManager::is_lockable_entity(QObject *object)
+{
+    qDebug() << ">" << Q_FUNC_INFO;
+
+    CouchDBManager::LockableEntity* e = qobject_cast<CouchDBManager::LockableEntity*>(object);
+    bool is_le = false;
+
+    if (e != NULL)
+    {
+        qDebug() << "# Se puede convertir en LockableEntity";
+
+        const QMetaObject* meta = e->metaObject();
+
+        for (int i = 0; i < meta->methodCount(); i++)
+        {
+            if (QString(meta->method(i).name()) == "is_lockable_entity")
+            {
+                is_le = true;
+                qDebug() << "# Es un objeto LockableEntity.";
+
+                break;
+            }
+        }
+    }
+
+    qDebug() << "<" << Q_FUNC_INFO;
+
+    return is_le;
+}
+
 bool CouchDBManager::DBManager::is_versionable_entity(QObject *object)
 {
     qDebug() << ">" << Q_FUNC_INFO;
