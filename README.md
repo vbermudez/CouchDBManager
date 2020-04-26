@@ -3,6 +3,7 @@
 > _A C++/Qt API that manages entities stored in CouchDB._
 
 [Documentación anterior](https://github.com/vbermudez/CouchDBManager/wiki)
+
 [CouchDBManager Design Documents](https://github.com/vbermudez/CouchDBManager-DesignDocuments)
 
 ## Tabla de contenidos
